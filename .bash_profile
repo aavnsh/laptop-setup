@@ -28,7 +28,9 @@ unset file
 
 source /usr/local/bin/virtualenvwrapper.sh
 
-
+if [ -f "$HOME/bash_profile_local" ]; then
+	source $HOME/bash_profile_local
+fi
 
 ### Startup messages
 clear

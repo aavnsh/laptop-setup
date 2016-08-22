@@ -44,20 +44,17 @@ if [ ! -d "$HOME/.bin/" ]; then
 fi
 
 cd $HOME
-curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.bash_profile
+if [ -f "$HOME/.bash_profile" ]; then
+	curl https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.bash_profile >> /tmp/.bash_profile
+	diff $HOME/.bash_profile /tmp/.bash_profile
+fi
+else
+	curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.bash_profile
+fi	
 curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.path
 curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.aliases
 curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.bash_prompt
 curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.functions
-
-#if [ ! -f "$HOME/.bash_profile" ]; then
-#  touch "$HOME/.bash_profile"
-#fi
-
-diff $HOME/bash_profile_local ./bash_profile_local
-
-
-append_to_zshrc 'source $HOME/bash_profile_local"' 1
 
 # shellcheck disable=SC2016
 append_to_zshrc 'export PATH="$HOME/.bin:$PATH"'
