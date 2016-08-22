@@ -1,0 +1,176 @@
+#!/bin/sh
+
+# Inspired by the thoughtbot laptop script!
+# https://github.com/thoughtbot/laptop/blob/master/mac
+# no haters here - A lot of this is personal choice 
+# to turn my mac into an awesome development machine.
+
+fancy_echo() {
+  local fmt="$1"; shift
+
+  # shellcheck disable=SC2059
+  printf "\n$fmt\n" "$@"
+}
+
+fancy_echo "Mac setup start..."
+
+append_to_zshrc() {
+  local text="$1" zshrc
+  local skip_new_line="${2:-0}"
+
+  if [ -w "$HOME/bash_profile_local" ]; then
+    zshrc="$HOME/bash_profile_local"
+  else
+    zshrc="$HOME/bash_profile_local"
+  fi
+
+  if ! grep -Fqs "$text" "$zshrc"; then
+    if [ "$skip_new_line" -eq 1 ]; then
+      printf "%s\n" "$text" >> "$zshrc"
+    else
+      printf "\n%s\n" "$text" >> "$zshrc"
+    fi
+  fi
+}
+
+# shellcheck disable=SC2154
+# trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
+
+# Careful of set -e in init.d scripts http://www.debian.org/doc/debian-policy/ch-opersys.html
+# set -e
+
+if [ ! -d "$HOME/.bin/" ]; then
+  mkdir "$HOME/.bin"
+fi
+
+cd $HOME
+curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.bash_profile
+curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.path
+curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.aliases
+curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.bash_prompt
+curl -O https://raw.githubusercontent.com/aavnsh/laptop-setup/master/.functions
+
+#if [ ! -f "$HOME/.bash_profile" ]; then
+#  touch "$HOME/.bash_profile"
+#fi
+
+diff $HOME/bash_profile_local ./bash_profile_local
+
+
+append_to_zshrc 'source $HOME/bash_profile_local"' 1
+
+# shellcheck disable=SC2016
+append_to_zshrc 'export PATH="$HOME/.bin:$PATH"'
+
+HOMEBREW_PREFIX="/usr/local"
+
+if [ -d "$HOMEBREW_PREFIX" ]; then
+  if ! [ -r "$HOMEBREW_PREFIX" ]; then
+    sudo chown -R "$LOGNAME:admin" /usr/local
+  fi
+else
+  sudo mkdir "$HOMEBREW_PREFIX"
+  sudo chflags norestricted "$HOMEBREW_PREFIX"
+  sudo chown -R "$LOGNAME:admin" "$HOMEBREW_PREFIX"
+fi
+
+
+gem_install_or_update() {
+  if gem list "$1" --installed > /dev/null; then
+    gem update "$@"
+  else
+    gem install "$@"
+    rbenv rehash
+  fi
+}
+
+if ! command -v brew >/dev/null; then
+  fancy_echo "Installing Homebrew ..."
+    curl -fsS \
+      'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
+
+    append_to_zshrc '# recommended by brew doctor'
+
+    # shellcheck disable=SC2016
+    #One thing we need to do is tell the system to use programs installed by Hombrew (in `/usr/local/bin`) 
+    # rather than the OS default if it exists. We do this by adding `/usr/local/bin` to your `$PATH` environment variable:
+    append_to_zshrc 'export PATH="/usr/local/bin:$PATH"' 1
+fi
+
+if brew list | grep -Fq brew-cask; then
+ fancy_echo "Uninstalling old Homebrew-Cask ..."
+ brew uninstall --force brew-cask
+fi
+
+# cask_args appdir: '/Applications'
+
+fancy_echo "Updating Homebrew formulae ..."
+brew update
+brew bundle --file=- <<EOF
+# # Install Packages
+# tap "thoughtbot/formulae"
+tap "homebrew/services"
+tap 'caskroom/cask'
+brew "mas"
+# # Unix
+# brew "ctags"
+brew "git"
+brew "openssl"
+# brew "rcm"
+# brew "reattach-to-user-namespace"
+# brew "the_silver_searcher"
+# brew "tmux"
+# brew "vim"
+# brew "zsh"
+# # Heroku
+# brew "heroku-toolbelt"
+# brew "parity"
+# # GitHub
+# brew "hub"
+# # Image manipulation
+# brew "imagemagick"
+# # Testing
+# brew "qt"
+# # Programming languages
+# brew "libyaml" # should come after openssl
+# brew "node"
+# brew "rbenv"
+# brew "ruby-build"
+# # Databases
+# brew "postgres", restart_service: true
+# brew "redis", restart_service: true
+cask "macdown" # Markdown Editor
+#cask 'google-chrome'
+#cask 'java' unless system '/usr/libexec/java_home --failfast'
+#cask 'firefox', args: { appdir: '~/my-apps/Applications' }
+EOF
+
+
+# fancy_echo "Configuring Ruby ..."
+# find_latest_ruby() {
+#   rbenv install -l | grep -v - | tail -1 | sed -e 's/^ *//'
+# }
+
+# ruby_version="$(find_latest_ruby)"
+# # shellcheck disable=SC2016
+# append_to_zshrc 'eval "$(rbenv init - --no-rehash)"' 1
+# eval "$(rbenv init -)"
+
+# if ! rbenv versions | grep -Fq "$ruby_version"; then
+#   RUBY_CONFIGURE_OPTS=--with-openssl-dir=/usr/local/opt/openssl rbenv install -s "$ruby_version"
+# fi
+
+# rbenv global "$ruby_version"
+# rbenv shell "$ruby_version"
+# gem update --system
+# gem_install_or_update 'bundler'
+# number_of_cores=$(sysctl -n hw.ncpu)
+# bundle config --global jobs $((number_of_cores - 1))
+
+# if [ -f "$HOME/.laptop.local" ]; then
+#   fancy_echo "Running your customizations from ~/.laptop.local ..."
+#   # shellcheck disable=SC1090
+#   . "$HOME/.laptop.local"
+# fi
+
+fancy_echo "Mac setup end..."
