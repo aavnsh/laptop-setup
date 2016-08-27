@@ -1,6 +1,6 @@
 
 #   -----------------------------
-#   2.  MAKE TERMINAL BETTER
+#   MAKE TERMINAL BETTER
 #   -----------------------------
 
 alias cp='cp -iv'                           # Preferred 'cp' implementation
@@ -18,7 +18,7 @@ alias .4='ccd ../../../../'                  # Go back 4 directory levels
 alias .5='ccd ../../../../../'               # Go back 5 directory levels
 alias .6='ccd ../../../../../../'            # Go back 6 directory levels
 #Link to be created before 
-#ln -s /Applications/Sublime\ Text\ 2.app/Contents/SharedSupport/bin/subl /usr/local/bin/subl
+#ln -s /Applications/Sublime\ Text.app/Contents/SharedSupport/bin/subl /usr/local/bin/subl
 alias edit='subl'                           # edit:         Opens any file in sublime editor
 alias f='open -a Finder ./'                 # f:            Opens current directory in MacOS Finder
 alias ~="ccd ~"                              # ~:            Go Home
@@ -35,7 +35,7 @@ alias DT='tee ~/Desktop/terminalOut.txt'    # DT:           Pipe content to file
 alias lr='ls -R | grep ":$" | sed -e '\''s/:$//'\'' -e '\''s/[^-][^\/]*\//--/g'\'' -e '\''s/^/   /'\'' -e '\''s/-/|/'\'' | less'
 
 #   -------------------------------
-#   3.  FILE AND FOLDER MANAGEMENT
+#   FILE AND FOLDER MANAGEMENT
 #   -------------------------------
 
 alias numFiles='echo $(ls -1 | wc -l)'      # numFiles:     Count of non-hidden files in current dir
@@ -44,14 +44,14 @@ alias make5mb='mkfile 5m ./5MB.dat'         # make5mb:      Creates a file of 5m
 alias make10mb='mkfile 10m ./10MB.dat'      # make10mb:     Creates a file of 10mb size (all zeros)
 
 #   ---------------------------
-#   4.  SEARCHING
+#   SEARCHING
 #   ---------------------------
 
 alias qfind="find . -name "                 # qfind:    Quickly search for file
 
 
 #   ---------------------------
-#   5.  PROCESS MANAGEMENT
+#   PROCESS MANAGEMENT
 #   ---------------------------
 #   memHogsTop, memHogsPs:  Find memory hogs
 #   -----------------------------------------------------
@@ -75,7 +75,7 @@ alias qfind="find . -name "                 # qfind:    Quickly search for file
 
 
 #   ---------------------------
-#   6.  NETWORKING
+#   NETWORKING
 #   ---------------------------
 
 alias myip='curl -s ip.appspot.com'                 # myip:         Public facing IP Address
@@ -92,7 +92,7 @@ alias showBlocked='sudo ipfw list'                  # showBlocked:  All ipfw rul
 
 
 #   ---------------------------------------
-#   7.  SYSTEMS OPERATIONS & INFORMATION
+#   SYSTEMS OPERATIONS & INFORMATION
 #   ---------------------------------------
 alias mountReadWrite='/sbin/mount -uw /'    # mountReadWrite:   For use when booted into single-user
 
@@ -117,7 +117,7 @@ alias screensaverDesktop='/System/Library/Frameworks/ScreenSaver.framework/Resou
 
 
 #   ---------------------------------------
-#   8.  WEB DEVELOPMENT
+#   WEB DEVELOPMENT
 #   ---------------------------------------
 
 #alias apacheEdit='sudo edit /etc/httpd/httpd.conf'      # apacheEdit:       Edit httpd.conf
@@ -128,7 +128,7 @@ alias editHosts='sudo subl /etc/hosts'                  # editHosts:        Edit
 
 
 #   ---------------------------------------
-#   9.  Git
+#   Git
 #   ---------------------------------------
 # Compact, colorized git log
 alias gl="git log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
@@ -150,15 +150,26 @@ alias amend="git commit --amend -m"		#Git amend latest commit message
 
 
 #   ---------------------------------------
-#   11. Utilities
+#   Utilities
 #   ---------------------------------------
 
 alias speedtest='wget --output-document=/dev/null http://speedtest.wdc01.softlayer.com/downloads/test500.zip'
 
+#   ---------------------------------------
+#   PROJECT SPECIFIC
+#   ---------------------------------------
+
+alias wols="workon laptop-setup; cd $WORKON_HOME/laptop-setup";
 
 #   ---------------------------------------
-#   12.  REMINDERS & NOTES
+#   REMINDERS & NOTES
 #   ---------------------------------------
+
+alias weather="curl -4 http://wttr.in"
+
+# Directories
+alias dotfiles="cd $DOTFILES"
+alias library="cd $HOME/Library"
 
 # Source for a lot of alias
 # http://alias.sh/most-popular/usage
@@ -188,5 +199,6 @@ alias speedtest='wget --output-document=/dev/null http://speedtest.wdc01.softlay
 #   e.g.: hdiutil create -size 10m 10MB.dmg
 #   the above create files that are almost all zeros - if random bytes are desired
 #   then use: ~/Dev/Perl/randBytes 1048576 > 10MB.dat
+
 
 

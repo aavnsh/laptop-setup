@@ -1,0 +1,27 @@
+#   ---------------------------------------
+#   Python Development
+#   ---------------------------------------
+
+alias yp="cd $WORKON_HOME/yp3";
+alias woyp="workon yp3; yp";
+alias ws="uwsgi yourpeople/uwsgi-dev.ini --logto /tmp/uwsgi.log";
+alias wssql="SHOWSQL=True uwsgi yourpeople/uwsgi-dev.ini --logto /tmp/uwsgi.log";
+alias wslog="touch /tmp/uwsgi.log; tail -f /tmp/uwsgi.log";
+alias syntax="yp;python manage.py syntax; cd -";
+alias migrate="yp;yes | python manage.py migrateall -; cd -";
+alias shell="yp;python manage.py sh -r -u'`whoami`'; cd -";
+alias shellsql="yp;SHOWSQL=True python manage.py sh -u'`whoami`'; cd -";
+alias dbshell="yp;python manage.py dbshell; cd -";
+alias updatetestdb="yp;python manage.py updateschema --settings=yourpeople.updateschema_settings; cd -";
+alias embuilding='CATS=`pwd`;yp; cd console-app && ember build && cd ../client-app/ && ember build && cd ../component-library/ && ember build && cd  $CATS'
+alias prod="ssh ypadm00"
+
+
+alias sc="screen -S"
+alias sr="screen -r"
+#Shortcut for screen -ls
+alias sls="screen -ls"
+#Shortcut for reattaching a screen
+alias scw='screen -wipe'
+#Create a new named screen
+alias nsc='screen -dmS'

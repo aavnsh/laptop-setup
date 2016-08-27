@@ -74,7 +74,7 @@ showprofile () { grep --color=always -i  $@ ~/.bash_profile | grep -v '^\s*$' | 
 
 
 #   -------------------------------
-#   3.  FILE AND FOLDER MANAGEMENT
+#   FILE AND FOLDER MANAGEMENT
 #   -------------------------------
 
 zipf () { zip -r "$1".zip "$1" ; }          # zipf:         To create a ZIP archive of a folder
@@ -122,7 +122,7 @@ extract () {
 }
 
 #   ---------------------------
-#   4.  SEARCHING
+#   SEARCHING
 #   ---------------------------
 
 ff () { /usr/bin/find . -name "$@" ; }      # ff:       Find file under the current directory
@@ -135,7 +135,7 @@ ffe () { /usr/bin/find . -name '*'"$@" ; }  # ffe:      Find file whose name end
 
 
 #   ---------------------------
-#   5.  PROCESS MANAGEMENT
+#   PROCESS MANAGEMENT
 #   ---------------------------
 
 #   findPid: find out the pid of a specified process
@@ -152,7 +152,7 @@ ffe () { /usr/bin/find . -name '*'"$@" ; }  # ffe:      Find file whose name end
 
 
 #   ---------------------------
-#   6.  NETWORKING
+#   NETWORKING
 #   ---------------------------
 #ip shows ip addresses for eth0, eth1 and external
 function ip() {
@@ -163,7 +163,7 @@ function ip() {
 
 
 #   ---------------------------------------
-#   7.  SYSTEMS OPERATIONS & INFORMATION
+#   SYSTEMS OPERATIONS & INFORMATION
 #   ---------------------------------------
 
 #   ii:  display useful host related informaton
@@ -182,7 +182,7 @@ ii() {
 
 
 #   ---------------------------------------
-#   8.  WEB DEVELOPMENT
+#   WEB DEVELOPMENT
 #   ---------------------------------------
 
 httpHeaders () { /usr/bin/curl -I -L $@ ; }             # httpHeaders:      Grabs headers from web page
@@ -191,7 +191,7 @@ httpHeaders () { /usr/bin/curl -I -L $@ ; }             # httpHeaders:      Grab
 httpDebug () { /usr/bin/curl $@ -o /dev/null -w "dns: %{time_namelookup} connect: %{time_connect} pretransfer: %{time_pretransfer} starttransfer: %{time_starttransfer} total: %{time_total}\n" ; }
 
 #   ---------------------------------------
-#   9.  Git
+#   Git
 #   ---------------------------------------
 #git work done
 workdone(){
@@ -231,7 +231,7 @@ gitpr() {
 }
 
 #   ---------------------------------------
-#   10. PIP
+#   PIP
 #   ---------------------------------------
 
 #Since we made pip require virtual env, creating an alias gpip to override
@@ -241,7 +241,7 @@ gpip(){
 
 
 #   ---------------------------------------
-#   11. Utilities
+#   Utilities
 #   ---------------------------------------
 seek_confirmation() {
   printf "\n${bold}$@${reset}"
