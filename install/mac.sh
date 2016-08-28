@@ -73,7 +73,7 @@ append_to_profile() {
   local text="$1" profile
   local skip_new_line="${2:-0}"
 
-  BASH_LOCAL = "$HOME/.bash_profile_local"
+  BASH_LOCAL="$HOME/.bash_profile_local"
   if [ -w "$BASH_LOCAL" ]; then
     profile="$BASH_LOCAL"
   else

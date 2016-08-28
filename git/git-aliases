@@ -8,7 +8,9 @@ alias lg='git log --graph --full-history --all --color --pretty=format:"%x1b[31m
 
 alias gs="git status"   #N.B. Overrides ghostscript (probably not important if you don't use it)
 alias gd="git diff"
+alias ga="git add"
 alias gc="git commit"
+alias gg="git grep"
 alias gb="git branch" #Git Branch
 alias github="chrome \`git remote -v | grep github.com | grep fetch | head -1 | field 2 | sed 's/git:/http:/g'\`"
 #Find a String in the Entire Git History
