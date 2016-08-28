@@ -1,86 +1,30 @@
 # Mac OS X Dev Setup
-# Get from the repo: https://raw.githubusercontent.com/aavnsh/laptop-setup/master/mac
-# Review: less mac
-# Run as: sh mac 2>&1 | tee ~/laptop.log
-
-# Attempt 2
-# Using Curl
-# sh -c "`curl -fsSL https://raw.github.com/aavnsh/laptop-setup/master/master/remote-setup.sh`"
-# Or, using wget:
-#sh -c "`wget -O - --no-check-certificate https://raw.githubusercontent.com/aavnsh/laptop-setup/master/master/remote-setup.sh`"
-
-# Mac OS X Dev Setup
 
 This document describes how I set up my developer environment on a new MacBook or iMac. We will set up [Node](http://nodejs.org/) (JavaScript), [Python](http://www.python.org/), and [Ruby](http://www.ruby-lang.org/) environments, mainly for JavaScript and Python development. Even if you don't program in all three, it is good to have them as many command-line tools use one of them. As you read  and follow these steps, feel free to send me any feedback or comments you may have.
 
-- [System update](#system-update)
-- [System preferences](#system-preferences)
-- [Google Chrome](#google-chrome)
-- [iTerm2](#iterm2)
-- [Homebrew](#homebrew)
-- [Consolas](#consolas)
-- [Beautiful terminal](#beautiful-terminal)
-- [iTerm2](#iterm2)
-- [Git](#git)
-- [Sublime Text](#sublime-text)
-- [Vim](#vim)
-- [Python](#python)
-- [Virtualenv](#virtualenv)
-- [IPython](#ipython)
-- [Numpy and Scipy](#numpy-and-scipy)
-- [MySQL](#mysql)
-- [Node.js](#nodejs)
-- [JSHint](#jshint)
-- [Ruby and RVM](#ruby-and-rvm)
-- [LESS](#less)
-- [Heroku](#heroku)
-- [MongoDB](#mongodb)
-- [Redis](#redis)
-- [Elasticsearch](#elasticsearch)
-- [Projects folder](#projects-folder)
-- [Apps](#apps)
 
 ## System update
 
 First thing you need to do, on any OS actually, is update the system! For that: **Apple Icon > Software Update...**
 
+## Manually install xcode from app store
+
+## Get the dotfiles and start setup
+
+	$ curl -fsSL https://raw.github.com/aavnsh/laptop-setup/master/remote-setup.sh | sh 2>&1 | tee /tmp/laptop.log
+
+
 ## System preferences
 
 If this is a new computer, there are a couple tweaks I like to make to the System Preferences. Feel free to follow these, or to ignore them, depending on your personal preferences.
 
-In **Apple Icon > System Preferences**:
+Most preferences/installs are taken care of by my osx customization script. 
+You can check your old mac's preferences by looking at the defaults for e.g `defaults find trackpad` and some will be manually changed like below
 
-- Trackpad > Tap to click
-- Dock > Automatically hide and show the Dock
+## Installers
 
-## Google Chrome
-
-Install your favorite browser, mine happens to be Chrome.
-
-Download from [www.google.com/chrome](https://www.google.com/intl/en/chrome/browser/).
-
-## iTerm2
-
-Download and install [iTerm2](http://www.iterm2.com/). In **Finder**, drag and drop the **iTerm** Application file into the **Applications** folder.
-
-Change some preferences from **iTerm > Preferences...**: 
-
-- Tab **General** section **Closing**
-	- uncheck **Confirm closing multiple sessions** 
-	- **Confirm "Quit iTerm2 (Cmd+Q)" command**
-- Tab **Profiles**
-	- create a new one with the "+" icon, and rename it to your first name for example. 
-	- select **Other Actions... > Set as Default**.
-	- Section **Window**, change the size to **Columns: 125** and **Rows: 35**.
-	- Section **Miscellaneous** Check **If showing profile name...** option
-
-## Homebrew
-
-Package managers make it so much easier to install and update applications (for Operating Systems) or libraries (for programming languages). The most popularular one for OS X is [Homebrew](http://brew.sh/).
-
-### Install
-
-An important dependency before Homebrew can work is **Xcode**. Install it from the App Store.
+I use a combination of [homebrew](https://github.com/Homebrew/brew) (with [cask](https://caskroom.github.io/) and [mas](https://github.com/argon/mas)) for performing software installs. 
+An important dependency before Homebrew can work is **Xcode** which we manually installed previously.
     
 ### Usage
 
@@ -114,7 +58,20 @@ To see what you have installed (with their version numbers):
 
     $ brew list --versions
 
-## Consolas
+## A better Terminal - [iTerm2](http://www.iterm2.com/)
+
+Change some preferences from **iTerm > Preferences...**: 
+
+- Tab **General** section **Closing**
+	- uncheck **Confirm closing multiple sessions** 
+	- **Confirm "Quit iTerm2 (Cmd+Q)" command**
+- Tab **Profiles**
+	- create a new one with the "+" icon, and rename it to your first name for example. 
+	- select **Other Actions... > Set as Default**.
+	- Section **Window**, change the size to **Columns: 125** and **Rows: 35**.
+	- Section **Miscellaneous** Check **If showing profile name...** option
+
+### A Good Coding Font - Consolas
 
 I really like the Consolas font for coding. Being a Microsoft (!) font, it is not installed by default. Since we're going to be looking at a lot of terminal output and code, let's install it now.
 
@@ -133,7 +90,7 @@ If you don't have Office, follow these steps:
 
 And click **Install Font**. Thanks to Alexander Zhuravlev for his [post](http://blog.ikato.com/post/15675823000/how-to-install-consolas-font-on-mac-os-x).
 
-## Beautiful terminal
+### Making terminal more beautiful
 
 In **iTerm > Preferences...**, under the tab **Profiles**, section **Text**, change both fonts to **Consolas 13pt**.
 
@@ -144,9 +101,7 @@ Download [Solarized](http://ethanschoonover.com/solarized) color scheme. Unzip t
 (Thanks to Mathias Bynens for his awesome [dotfiles](https://github.com/mathiasbynens/dotfiles).)
 
     
-## Sublime Text
-
-Install [Sublime Text](http://www.sublimetext.com/). 
+## A good editor - [Sublime Text](http://www.sublimetext.com/). 
 
 Just like the terminal, let's configure our editor a little. Go to **Sublime Text 2 > Preferences > Settings - User** and paste the following in the file that just opened:
 
@@ -394,24 +349,15 @@ In terms of a GUI client for MySQL, I'm used to the official and free [MySQL Wor
 
 You can find the MySQL Workbench download [here](http://www.mysql.com/downloads/workbench/). (**Note**: It will ask you to sign in, you don't need to, just click on "No thanks, just start my download!" at the bottom.)
 
-## Node.js
+## Node.js & NVM
 
-Install [Node.js](http://nodejs.org/) with Homebrew:
+When installing Ruby, best practice is to use [NVM](https://github.com/creationix/nvm) (Node Version Manager)
 
     $ brew update
-    $ brew install node
-    
-The formula also installs the [npm](https://npmjs.org/) package manager. However, as suggested by the Homebrew output, we need to add `/usr/local/share/npm/bin` to our path so that npm-installed modules with executables will have them picked up.
+    $ brew install nvm
+    $ nvm install 4
 
-To do so, add this line to your `~/.path` file, before the `export PATH` line:
-
-```bash
-PATH=/usr/local/share/npm/bin:$PATH
-```
-        
-Open a new terminal for the `$PATH` changes to take effect.
-
-We also need to tell npm where to find the Xcode Command Line Tools, by running:
+We may need to tell npm where to find the Xcode Command Line Tools, by running:
 
     $ sudo xcode-select -switch /usr/bin
 
@@ -733,19 +679,23 @@ Elasticsearch's [documentation](http://www.elasticsearch.org/guide/) is more of 
 
 ## Projects folder
 
-This really depends on how you want to organize your files, but I like to put all my version-controlled projects in `~/Projects`. Other documents I may have, or things not yet under version control, I like to put in `~/Dropbox` (if you have Dropbox installed), or `~/Documents`.
+This really depends on how you want to organize your files, but I like to put all my version-controlled projects in `~/projects-venv`. Other documents I may have, or things not yet under version control, I like to put in `~/Dropbox` (if you have Dropbox installed), or `~/Documents`.
 
 ## Apps
 
 Here is a quick list of some apps I use, and that you might find useful as well:
 
-- [Dropbox](https://www.dropbox.com/): File syncing to the cloud. I put all my documents in Dropbox. It syncs them to all my devices (laptop, mobile, tablet), and serves as a backup as well! **(Free for 2GB)**
-- [Google Drive](https://drive.google.com/): File syncing to the cloud too! I use Google Docs a lot to collaborate with others (edit a document with multiple people in real-time!), and sometimes upload other non-Google documents (pictures, etc.), so the app comes in handy for that. **(Free for 5GB)**
-- [1Password](https://agilebits.com/onepassword): Allows you to securely store your login and passwords. Even if you only use a few different passwords (they say you shouldn't!), this is really handy to keep track of all the accounts you sign up for! Also, they have a mobile app so you always have all your passwords with you (syncs with Dropbox). A little pricey though. There are free alternatives. **($50 for Mac app, $18 for iOS app)**
-- [Marked](http://markedapp.com/): As a developer, most of the stuff you write ends up being in [Markdown](http://daringfireball.net/projects/markdown/). In fact, this `README.md` file (possibly the most important file of a GitHub repo) is indeed in Markdown, written in Sublime Text, and I use Marked to preview the results everytime I save. **($4)**
-- [Path Finder](http://cocoatech.com/pathfinder/): I love OSX, it's Unix so great for developers, and all of it just works and looks pretty! Only thing I "miss" from Windows (OMG what did he say?), is a decent file explorer. I think Finder is a pain to use. So I gladly paid for this alternative, but I understand others might find it expensive just to not have to use Finder. **($40)**
-- [Evernote](https://evernote.com/): If I don't write something down, I'll forget it. As a developer, you learn so many new things every day, and technology keeps changing, it would be insane to want to keep it all in your head. So take notes, sync them to the cloud, and have them on all your devices. To be honest, I switched to [Simplenote](http://simplenote.com/) because I only take text notes, and I got tired of Evernote putting extra spaces between paragraphs when I copy & pasted into other applications. Simplenote is so much better for text notes (and it supports Markdown!). **(Both are free)**
-- [Moom](http://manytricks.com/moom/): Don't waste time resizing and moving your windows. Moom makes this very easy. **($10)**
+- [Dropbox](https://www.dropbox.com/): File syncing to the cloud. 
+- [Google Drive](https://drive.google.com/): File syncing to the cloud too! esp when you use Google Docs to collaborate with others (edit a document with multiple people in real-time!).
+- [MacDown](http://macdown.uranusjr.com): A simple [Markdown](http://daringfireball.net/projects/markdown/) editor. In fact, this `README.md` file (possibly the most important file of a GitHub repo) is indeed in Markdown, and edited in MacDown
+- commander-one is a much better file explorer than finder
+- github-desktop
+- [Alfred](https://www.alfredapp.com/help/getting-started/)
+- OneNote - For Notes
+- Caffeine
+- F.lux
+- CloudPlane
+- and others - please check the Brewfile in the setup scripts
 
 ## Credits
 [nicolashery](https://github.com/nicolashery/mac-dev-setup)
