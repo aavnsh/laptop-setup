@@ -1,0 +1,85 @@
+# brew tap Homebrew/bundle ; has to come first.
+
+# Taps
+tap "caskroom/fonts"
+tap "caskroom/versions"
+tap "homebrew/services"
+tap "caskroom/cask"
+
+#git-extras (https://vimeo.com/45506445): Adds a shit ton of useful commands #   to git.
+       #meld Visual Diff Tool http://meldmerge.org/
+       # - autoenv (https://github.com/kennethreitz/autoenv): this utility makes it
+      #   easy to apply environment variables to projects. I mostly use it for Go and
+      #   Node.js projects. For Ruby projects, I just use Foreman or Forego.
+      # - autojump (https://github.com/joelthelion/autojump): a faster way to navigate
+      #   your filesystem.
+# Build tools
+brew "xz"
+brew "go"
+brew "mas"
+brew "clib"
+brew "nvm" # (https://github.com/creationix/nvm) instead
+      # of installing Node directly. This gives me more explicit control over
+      # which version I'm using.
+brew "rbenv" #https://github.com/rbenv/rbenv
+
+# Dev tools
+
+# Git
+brew "git"
+brew "git-lfs"
+
+
+# Libraries
+brew "openssl"
+brew "gpg"
+
+# Languages
+
+
+# Dev tools
+mas "Xcode", id: 497799835
+mas "Dash", id: 449589707
+brew "fzf" # (https://github.com/junegunn/fzf) Fuzzy Commany Finder
+
+
+# Misc tools
+brew "mackup"
+brew "thefuck" # (https://github.com/nvbn/thefuck): Correct your previous command. Note
+              #   that this needs to be added to zsh or bash. See the project README.
+brew "coreutils"
+brew "fpp"
+
+brew "hh"
+brew "tree" #Tree (http://mama.indstate.edu/users/ice/tree/): A directory listing utility
+#   that produces a depth indented listing of files.
+brew "trash"
+
+#Services
+# brew "imagemagick"
+# brew "redis", restart_service: true
+# brew "libyaml" # should come after openssl
+# # Databases
+# brew "postgres", restart_service: true
+# brew "redis", restart_service: true
+
+
+
+# General Apps
+cask "github-desktop", args: { appdir: '/Applications' }
+cask "commander-one", args: { appdir: '/Applications' }
+cask "franz", args: { appdir: '/Applications' }
+cask "google-chrome", args: { appdir: '/Applications' }
+cask "iterm2", args: { appdir: '/Applications' }
+cask "launchrocket", args: { appdir: '/Applications' }
+cask "skype", args: { appdir: '/Applications' }
+cask "slack", args: { appdir: '/Applications' }
+cask "sublime-text", args: { appdir: '/Applications' }
+cask "alfred", args: { appdir: '/Applications' }
+#cask 'java' unless system '/usr/libexec/java_home --failfast'
+
+mas "Skitch", id:425955336
+mas "HeliumLift", id: 1018899653 
+mas "OneDrive", id: 823766827 
+mas "Slack", id: 803453959
+mas "Caffeine", id: 411246225

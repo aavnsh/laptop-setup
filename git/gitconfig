@@ -1,0 +1,48 @@
+[user]
+  name = aavnsh
+  email = avinash+github@zenefits.com
+[core]
+  editor = subl -n -w
+  whitespace = space-before-tab,indent-with-non-tab,trailing-space,cr-at-eol
+  excludesfile = ~/.gitignore_global
+[web]
+  browser = google-chrome
+[rerere]
+  enabled = 1
+  autoupdate = 1
+[color]
+  ui = true
+[color "branch"]
+  current = yellow bold
+  local = green bold
+  remote = cyan bold
+[color "diff"]
+  meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
+  whitespace = red reverse
+[color "status"]
+  added = green bold
+  changed = yellow bold
+  untracked = red bold
+[push]
+  default = simple
+[filter "media"]
+  required = true
+  clean = git media clean %f
+  smudge = git media smudge %f
+[filter "lfs"]
+  clean = git lfs clean %f
+  smudge = git lfs smudge %f
+  required = true
+[credential]
+  helper = osxkeychain
+[difftool "sourcetree"]
+  cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+  path = 
+[mergetool "sourcetree"]
+  cmd = /opt/homebrew-cask/Caskroom/sourcetree/2.1/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+  trustExitCode = true
+[alias]
+  lastchange = 'log -p --follow -n 1'

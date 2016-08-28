@@ -1,0 +1,22 @@
+#   ---------------------------------------
+#   Git
+#   ---------------------------------------
+# Compact, colorized git log
+alias gl="git log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
+# Visualise git log (like gitk, in the terminal)
+alias lg='git log --graph --full-history --all --color --pretty=format:"%x1b[31m%h%x09%x1b[32m%d%x1b[0m%x20%s"'
+
+alias gs="git status"   #N.B. Overrides ghostscript (probably not important if you don't use it)
+alias gd="git diff"
+alias gc="git commit"
+alias gb="git branch" #Git Branch
+alias github="chrome \`git remote -v | grep github.com | grep fetch | head -1 | field 2 | sed 's/git:/http:/g'\`"
+#Find a String in the Entire Git History
+alias gitsearch='git rev-list --all | xargs git grep -F'
+alias gsl='git shortlog -nsw -e'  #Who contributed how much
+alias git-count-commits="git log --pretty=format:'' | wc -l"    #Git Count Comits
+alias geg="git config -e"    #Edit git config
+alias gru="git status --porcelain | grep -o '^??.*$' | cut -d' ' -f2 | xargs rm -riv" #Remove git untracked files
+alias gamend="git commit --amend -m"   #Git amend latest commit message
+
+alias grefresh="git checkout master && cleanupDS && git pull && git fetch -p"

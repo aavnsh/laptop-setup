@@ -33,9 +33,45 @@ function prompt {
     local SELECT="if [ $? = 0 ]; then echo \"${SMILEY}\"; else echo \"${FROWNY}\"; fi"  
     local SELECT2="${SELECT}"
 
-export PS1="\[$txtylw\]\$\[$bldblu\] \w\[$txtred\] => \[$txtrst\]"
+    # Source the git bash completion file
+    if [ -f ~/.git-completion.bash ]; then
+        if [ -f ~/.git-prompt.sh ]; then
+            source ~/.git-prompt.sh
+            source ~/.git-completion.bash
+            GIT_PS1_SHOWDIRTYSTATE=true
+            GIT_PS1_SHOWSTASHSTATE=true
+            GIT_PS1_SHOWUPSTREAM="auto"
+            #PS1='\t:\[\033[32m\]$(__git_ps1 " (%s)")\[\033[00m\] \W$ '
+        fi
+    fi
 
-    export PS1="___________________${NORMAL}[${CYAN}\u${NORMAL}@${YELLOW}\h${NORMAL}] ${PURPLEBOLD}\$(parse_git_branch) ${WHITEBOLD}\w${NORMAL}  \\$ \n =>"
+    export PS1="\[$txtylw\]\$\[$bldblu\] \w\[$txtred\] => \[$txtrst\]"
+
+    # Symbols after the branch name indicate additional information about the repo state
+    # check prompt_help function below
+
+    # Change this symbol to something sweet.
+    # (http://en.wikipedia.org/wiki/Unicode_symbols)
+    symbol="⚡ "
+
+    #export PS1="\[${MAGENTA}\]\u \[$RESET\]in \[$GREEN\]\w\[$RESET\]\$([[ -n \$(git branch 2> /dev/null) ]] && echo \" on \")\[$PURPLE\]\$(parse_git_branch)\[$RESET\]\n$symbol\[$RESET\]"
+    #export PS2="\[$ORANGE\]→ \[$RESET\]"
+
+    export PS1="${NORMAL}[${CYAN}\u${NORMAL}@${YELLOW}\h${NORMAL}] ${PURPLEBOLD}\$(__git_ps1) ${WHITEBOLD}\w${NORMAL}  ${NORMAL}\n$symbol${NORMAL}"
     #export PS1="___________________    | \w @ \h (\u) \n| => "
-    export PS2="| => "
+    export PS2="${CYAN}→ ${NORMAL}"
+
+    # Only show the current directory's name in the tab
+    export PROMPT_COMMAND='echo -ne "\033]0;${PWD##*/}\007"'
+
+}
+
+function prompt_help {
+    echo "Symbols after the branch name indicate additional information about the repo state"
+    echo " #*: The branch has modifications"
+    echo " $: There are stashed changes"
+    echo " =: The branch is equal with the remote branch"
+    echo " <: The branch is behind the remote branch (can be fast-forwarded)""
+    echo " >: The branch is ahead of the remote branch (remote branch can be fast-forwarded)""
+    echo " <>: The branch and remote branch have diverged (will need merge)""
 }

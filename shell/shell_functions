@@ -1,4 +1,7 @@
-#Work In Progress
+#   ---------------------------------------------------------
+# Work In Progress
+#   ---------------------------------------------------------
+
 function tab_title {
     echo -ne "\033]0;"$*"\007@"
     echo "Cmd: $*"
@@ -14,9 +17,9 @@ function tab_title {
 }
 
 
-#
-#Set Colors
-#
+#   ---------------------------------------------------------
+# Set Colors
+#   ---------------------------------------------------------
 
 bold=$(tput bold)
 underline=$(tput sgr 0 1)
@@ -28,9 +31,9 @@ green=$(tput setaf 76)
 tan=$(tput setaf 3)
 blue=$(tput setaf 38)
 
-#
+#   ---------------------------------------------------------
 # Headers and  Logging
-#
+#   ---------------------------------------------------------
 # e_header "I am a sample script"
 # e_success "I am a success message"
 # e_error "I am an error message"
@@ -57,9 +60,10 @@ e_note() { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${reset}\n"
 
 
 mcd () { mkdir -p "$1" && cd "$1"; }        # mcd:          Makes new Dir and jumps inside
-trash () { command mv "$@" ~/.Trash ; }     # trash:        Moves a file to the MacOS trash
+#trash () { command mv "$@" ~/.Trash ; }     # trash:        Moves a file to the MacOS trash - installed the trash package in brew instead
 ql () { qlmanage -p "$*" >& /dev/null; }    # ql:           Opens any file in MacOS Quicklook Preview
 
+#   ---------------------------------------------------------
 #   mans:   Search manpage given in agument '1' for term given in argument '2' (case insensitive)
 #           displays paginated result with colored search terms and two lines surrounding each hit.             Example: mans mplayer codec
 #   --------------------------------------------------------------------
@@ -67,21 +71,23 @@ mans () {
     man $1 | grep -iC2 --color=always $2 | less
 }
 
+#   ---------------------------------------------------------
 #   showa: to remind yourself of an alias (given some part of it)
 #   ------------------------------------------------------------
 showaliases () { grep ^alias ~/.bash_profile | grep --color=always -i  $@ | grep -v '^\s*$' | less -FSRXc ;}
 showprofile () { grep --color=always -i  $@ ~/.bash_profile | grep -v '^\s*$' | less -FSRXc ;}
 
 
-#   -------------------------------
+#   ---------------------------------------------------------
 #   FILE AND FOLDER MANAGEMENT
-#   -------------------------------
+#   ---------------------------------------------------------
 
 zipf () { zip -r "$1".zip "$1" ; }          # zipf:         To create a ZIP archive of a folder
+getpath() { realpath "$1" | pbcopy; echo "`pbpaste` is in clipboard"; } # Get full path of file in clipboard
 
-
+#   ---------------------------------------------------------
 #   cdf:  'Cd's to frontmost window of MacOS Finder
-#   ------------------------------------------------------
+#   ---------------------------------------------------------
 cdf () {
     currFolderPath=$( /usr/bin/osascript <<EOT
         tell application "Finder"
@@ -98,6 +104,7 @@ EOT
     ccd "$currFolderPath"
 }
 
+#   ---------------------------------------------------------
 #   extract:  Extract most know archives with one command
 #   ---------------------------------------------------------
 extract () {
@@ -121,39 +128,42 @@ extract () {
      fi
 }
 
-#   ---------------------------
+#   ---------------------------------------------------------
 #   SEARCHING
-#   ---------------------------
+#   ---------------------------------------------------------
 
 ff () { /usr/bin/find . -name "$@" ; }      # ff:       Find file under the current directory
 ffs () { /usr/bin/find . -name "$@"'*' ; }  # ffs:      Find file whose name starts with a given string
 ffe () { /usr/bin/find . -name '*'"$@" ; }  # ffe:      Find file whose name ends with a given string
 
+#   ---------------------------------------------------------
 #   spotlight: Search for a file using MacOS Spotlight's metadata
 #   -----------------------------------------------------------
-    spotlight () { mdfind "kMDItemDisplayName == '$@'wc"; }
+spotlight () { mdfind "kMDItemDisplayName == '$@'wc"; }
 
 
-#   ---------------------------
+#   ---------------------------------------------------------
 #   PROCESS MANAGEMENT
-#   ---------------------------
+#   ---------------------------------------------------------
 
+#   ---------------------------------------------------------
 #   findPid: find out the pid of a specified process
-#   -----------------------------------------------------
+#   ---------------------------------------------------------
 #       Note that the command name can be specified via a regex
 #       E.g. findPid '/d$/' finds pids of all processes with names ending in 'd'
 #       Without the 'sudo' it will only find processes of the current user
 #   -----------------------------------------------------
-    findPid () { lsof -t -c "$@" ; }
+findPid () { lsof -t -c "$@" ; }
 
+#   ---------------------------------------------------------
 #   my_ps: List processes owned by my user:
-#   ------------------------------------------------------------
-    my_ps() { ps $@ -u $USER -o pid,%cpu,%mem,start,time,bsdtime,command ; }
+#   ---------------------------------------------------------
+my_ps() { ps $@ -u $USER -o pid,%cpu,%mem,start,time,bsdtime,command ; }
 
 
-#   ---------------------------
+#   ---------------------------------------------------------
 #   NETWORKING
-#   ---------------------------
+#   ---------------------------------------------------------
 #ip shows ip addresses for eth0, eth1 and external
 function ip() {
     echo -e "Ethernet:\t `ipconfig getifaddr en1 2> /dev/null`"
@@ -162,12 +172,13 @@ function ip() {
 }
 
 
-#   ---------------------------------------
+#   ---------------------------------------------------------
 #   SYSTEMS OPERATIONS & INFORMATION
-#   ---------------------------------------
+#   ---------------------------------------------------------
 
+#   ---------------------------------------------------------
 #   ii:  display useful host related informaton
-#   -------------------------------------------------------------------
+#   ---------------------------------------------------------
 ii() {
     echo -e "\nYou are logged on ${RED}$HOST"
     echo -e "\nAdditionnal information:$NC " ; uname -a
@@ -181,58 +192,24 @@ ii() {
 }
 
 
-#   ---------------------------------------
+#   ---------------------------------------------------------
 #   WEB DEVELOPMENT
-#   ---------------------------------------
+#   ---------------------------------------------------------
 
 httpHeaders () { /usr/bin/curl -I -L $@ ; }             # httpHeaders:      Grabs headers from web page
 #   httpDebug:  Download a web page and show info on what took time
-#   -------------------------------------------------------------------
+#   ---------------------------------------------------------
 httpDebug () { /usr/bin/curl $@ -o /dev/null -w "dns: %{time_namelookup} connect: %{time_connect} pretransfer: %{time_pretransfer} starttransfer: %{time_starttransfer} total: %{time_total}\n" ; }
 
-#   ---------------------------------------
-#   Git
-#   ---------------------------------------
-#git work done
-workdone(){
-    default="1 day ago"
-    git log --committer=aavnsh --pretty=format:"%Cgreen%ar (%h)%n%Creset> %s %b%n" --since="${1:-$default}" --no-merges
-}
+#   ---------------------------------------------------------
+#   VIRTUAL ENV
+#   ---------------------------------------------------------
+won() { workon "$1"; cdvirtualenv "$1"; }
 
-parse_git_branch() {
-    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
-}
 
-parse_git_branch_v2() {
-    # The above version works well when you are not on a git proj folder - this version only works if u r in the proj folder
-    git symbolic-ref --short -q HEAD
-}
-# This script defines a command to find the Github
-# link to the Pull Request that merged in the target commit.
-gitpr() {
-    COMMIT=$(
-       git log \
-              --merges \
-                 --grep="Merge pull request" \
-                --ancestry-path $1~..HEAD \
-                   --pretty=format:%H | \
-                      tail -n1
-    )
-    PULL=$(
-           git show $COMMIT --pretty=oneline | \
-                  sed "s/.*#\([0-9]*\).*/\1/g"
-        )
-    URL=$(
-           git config --get remote.origin.url | \
-                  sed "s/\(.*\).git/\1\/pull\/$PULL/g"
-            )
-             git show $COMMIT;
-              echo $URL;
-}
-
-#   ---------------------------------------
+#   ---------------------------------------------------------
 #   PIP
-#   ---------------------------------------
+#   ---------------------------------------------------------
 
 #Since we made pip require virtual env, creating an alias gpip to override
 gpip(){
@@ -240,9 +217,9 @@ gpip(){
 }
 
 
-#   ---------------------------------------
+#   ---------------------------------------------------------
 #   Utilities
-#   ---------------------------------------
+#   ---------------------------------------------------------
 seek_confirmation() {
   printf "\n${bold}$@${reset}"
   read -p " (y/n) " -n 1
@@ -264,3 +241,8 @@ return 1
 # else
 #   e_error "You did not ask for a success message"
 # fi
+
+if [ -f "$HOME/.fzf-functions" ]; then
+  source $HOME/.fzf-functions
+fi
+

@@ -11,49 +11,10 @@
 
 
 #https://github.com/pathikrit/mac-setup-script/blob/master/setup.sh
-brews=(
-       openssl
-       xz
-       go
-       mas
-       clib
-       mackup
-       thefuck # (https://github.com/nvbn/thefuck): Correct your previous command. Note
-              #   that this needs to be added to zsh or bash. See the project README.
-       coreutils
-       fpp
-       gpg
-       hh
-       tree #Tree (http://mama.indstate.edu/users/ice/tree/): A directory listing utility
-#   that produces a depth indented listing of files.
-       trash
-       'git'
-       'git-lfs'
-       #git-extras (https://vimeo.com/45506445): Adds a shit ton of useful commands #   to git.
-       #meld Visual Diff Tool http://meldmerge.org/
-       # - autoenv (https://github.com/kennethreitz/autoenv): this utility makes it
-      #   easy to apply environment variables to projects. I mostly use it for Go and
-      #   Node.js projects. For Ruby projects, I just use Foreman or Forego.
-      # - autojump (https://github.com/joelthelion/autojump): a faster way to navigate
-      #   your filesystem.
-      nvm # (https://github.com/creationix/nvm) instead
-      # of installing Node directly. This gives me more explicit control over
-      # which version I'm using.
-      rbenv #https://github.com/rbenv/rbenv
-       )
 
-casks=(
-       commander-one
-       franz
-       google-chrome
-       github-desktop
-       iterm2
-       launchrocket
-       skype
-       slack
-       )
 pips=(
       glances #Glances is a cross-platform curses-based system monitoring tool written in Python. https://pypi.python.org/pypi/Glances
+      Pygments #Pygments is a syntax highlighting package written in Python https://pypi.python.org/pypi/Pygments
       )
 gems=(
       bundle
@@ -69,12 +30,6 @@ bkpgs=(
 apms=(
       )
 
-git_configs=(
-  "user.name aavnsh"
-  "user.email avinash+github@zenefits.com"
-  "push.default simple"
-)
-
 fails=()
 
 
@@ -89,7 +44,6 @@ set +x
 fancy_echo() {
   local fmt="$1"; shift
 
-  # shellcheck disable=SC2059
   printf "\n$fmt\n" "$@"
 }
 
@@ -119,10 +73,11 @@ append_to_profile() {
   local text="$1" profile
   local skip_new_line="${2:-0}"
 
-  if [ -w "$HOME/bash_profile_local" ]; then
-    profile="$HOME/bash_profile_local"
+  BASH_LOCAL = "$HOME/.bash_profile_local"
+  if [ -w "$BASH_LOCAL" ]; then
+    profile="$BASH_LOCAL"
   else
-    profile="$HOME/bash_profile_local"
+    profile="$BASH_LOCAL"
   fi
 
   if ! grep -Fqs "$text" "$profile"; then
@@ -160,7 +115,6 @@ if [ ! -d "$HOME/.bin/" ]; then
   mkdir "$HOME/.bin"
 fi
 
-# shellcheck disable=SC2016
 append_to_profile 'export PATH="$HOME/.bin:$PATH"'
 
 HOMEBREW_PREFIX="/usr/local"
@@ -207,41 +161,20 @@ fi
 
 fancy_echo "Updating Homebrew formulae ..."
 brew update
-brew bundle --file=- <<EOF
-# # Unix
-# brew "ctags"
-#brew "openssl"
-# brew "imagemagick"
-# # Testing
-# brew "qt"
-# # Programming languages
-# brew "libyaml" # should come after openssl
-# brew "node"
-# # Databases
-# brew "postgres", restart_service: true
-# brew "redis", restart_service: true
-#cask 'java' unless system '/usr/libexec/java_home --failfast'
-#cask 'firefox', args: { appdir: '~/my-apps/Applications' }
-EOF
 
 # echo "Installing Java ..."
 # brew cask install java
 
-fancy_echo "Installing packages ..."
-brew info ${brews[@]}
-install 'brew install' ${brews[@]}
+fancy_echo "Installing brew..."
+# https://github.com/Homebrew/homebrew-bundle
+cd ~/dotfiles/brew/ && brew bundle
 
-fancy_echo "Tapping casks ..."
-brew tap caskroom/fonts
-brew tap caskroom/versions
-brew tap homebrew/services
-brew tap caskroom/cask
+fancy_echo "Post Brew..."
+if [ which fzf]; then
+  /usr/local/opt/fzf/install --all
+fi
 
-fancy_echo "Installing software ..."
-brew cask info ${casks[@]}
-install 'brew cask install --appdir=/Applications' ${casks[@]}
-
-if test ! $(which nvm)
+if [ command -v nvm ]
 then
   echo "Installing a stable version of Node..."
   # Install the stable version of node.
@@ -262,37 +195,23 @@ install 'apm install' ${apms[@]}
 
 
 mas list | cut -d' ' -f1 | sort -n > /tmp/mas_exist_apps
-mas_to_install=(1018899653 #HeliumLift
-425955336 #Skitch
-823766827 #OneDrive
-497799835 #Xcode
-803453959 #Slack
-449589707 #Dash
-411246225 #Caffeine
+mas_to_install=(
 )
 printf "%s\n" "${mas_to_install[@]}" | sort -n > /tmp/mas_to_install
 mas_apps=`comm -13 /tmp/mas_exist_apps /tmp/mas_to_install`
 install 'mas install' ${mas_apps[@]} 
-#for i in ${mas_apps[@]}; do
-#  mas install $i
-#done
 
-#fancy_echo "Upgrading bash ..."
-#sudo bash -c "echo $(brew --prefix)/bin/bash >> /private/etc/shells"
+# fancy_echo "Upgrading bash ..."
+# sudo bash -c "echo $(brew --prefix)/bin/bash #>> /private/etc/shells"
 #cd; 
 #curl -#L https://github.com/barryclark/bashstrap/tarball/master | tar -xzv --strip-components 1 --exclude={README.md,screenshot.png}
 #source ~/.bash_profile
 
-fancy_echo "Setting git defaults ..."
-for config in "${git_configs[@]}"
-do
-  git config --global ${config}
-done
-
+GO_DIR="$HOME/go_work"
 fancy_echo "Setting up go ..."
-#if [ ! -d "/usr/libs/go" ]; then
-#  sudo mkdir -p /usr/libs/go
-  append_to_profile 'export GOPATH=/usr/libs/go' 1
+if [ -d "$GO_DIR" ]; then
+  mkd "$GO_DIR"
+  append_to_profile 'export GOPATH="$GO_DIR"' 1
   append_to_profile 'export PATH=$PATH:$GOPATH/bin' 1
 #fi
 
@@ -336,14 +255,9 @@ done
 
 if [ -f "$HOME/.laptop.local" ]; then
   fancy_echo "Running your customizations from ~/.laptop.local ..."
-  # shellcheck disable=SC1090
   . "$HOME/.laptop.local"
 fi
 
 fancy_echo "Run 'mackup restore' after DropBox has done syncing"
-
-#read -p "Hit enter to run [OSX for Hackers] script..." c
-#sh -c "$(curl -sL https://gist.githubusercontent.com/brandonb927/3195465/raw/osx-for-hackers.sh)"
-
 
 fancy_echo "Mac setup end..."

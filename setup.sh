@@ -141,10 +141,14 @@ declare -a FILES_TO_SYMLINK=(
   #'shell/gemrc'
   #'shell/inputrc'
   #'shell/screenrc'
+  'fzf/fzf-functions'
 
   #'git/gitattributes'
-  #'git/gitconfig'
-  #'git/gitignore'
+  'git/gitconfig'
+  'git/gitignore_global'
+  'git/git-completion.bash'
+  'git/git-prompt.sh'
+  'git/git-aliases'
 
 )
 
@@ -234,5 +238,5 @@ sh osx/set-defaults.sh
 # Install Packages                                          #
 ###############################################################################
 
-chmod +x ./install/mac.sh
-sh ./install/mac.sh
+chmod +x install/mac.sh
+sh install/mac.sh
