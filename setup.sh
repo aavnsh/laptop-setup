@@ -111,48 +111,19 @@ print_success() {
   printf "\e[0;32m  [✔] $1\e[0m\n"
 }
 
-
-dir=~/dotfiles                        # dotfiles directory
-dir_backup=~/dotfiles_old             # old dotfiles backup directory
+source "install/configs.sh"
 
 # Get current dir (so run this script from anywhere)
-DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export DOTFILES_DIR
+FILE_WORKING_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export FILE_WORKING_DIR
 
 # Create dotfiles_old in homedir
-echo -n "Creating $dir_backup for backup of any existing dotfiles in ~..."
+print_info "Creating $dir_backup for backup of any existing dotfiles in ~..."
 mkd $dir_backup
-echo "done"
+print_info "done"
 
 
-declare -a FILES_TO_SYMLINK=(
-
-  'shell/shell_aliases'
-  #'shell/shell_config'
-  #'shell/shell_exports'
-  'shell/shell_functions'
-  'shell/path'
-  'shell/bash_profile'
-  'shell/bash_prompt'
-  #'shell/bashrc'
-  #'shell/zshrc'
-  #'shell/ackrc'
-  #'shell/curlrc'
-  #'shell/gemrc'
-  #'shell/inputrc'
-  #'shell/screenrc'
-  'fzf/fzf-functions'
-
-  #'git/gitattributes'
-  'git/gitconfig'
-  'git/gitignore_global'
-  'git/git-completion.bash'
-  'git/git-prompt.sh'
-  'git/git-aliases'
-
-)
-
-echo "Moving any existing dotfiles from ~ to $dir_backup"
+print_info "Moving any existing dotfiles from ~ to $dir_backup"
 for i in ${FILES_TO_SYMLINK[@]}; do
   mv ~/.${i##*/} ~/dotfiles_old/
 done
@@ -169,10 +140,11 @@ main() {
 
   for i in ${FILES_TO_SYMLINK[@]}; do
 
-    sourceFile="$(pwd)/$i"
+    sourceFile="$FILE_WORKING_DIR/$i"
     targetFile="$HOME/.$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
 
-    if [ ! -e "$targetFile" ]; then
+    execute "chmod -w $sourceFile"
+    if [ ! -e "$targetFile" ]; then 
       execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
     elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
       print_success "$targetFile → $sourceFile"

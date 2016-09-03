@@ -170,8 +170,9 @@ fancy_echo "Installing brew..."
 cd ~/dotfiles/brew/ && brew bundle
 
 fancy_echo "Post Brew..."
-if [ which fzf]; then
+if [ -x "$(command -v fzf)" ]; then
   /usr/local/opt/fzf/install --all
+  append_to_profile "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" 1
 fi
 
 if [ command -v nvm ]
@@ -186,7 +187,9 @@ then
 fi
 
 fancy_echo "Installing secondary packages ..."
+PIP_REQUIRE_VIRTUALENV=''
 install 'pip install --upgrade' ${pips[@]}
+PIP_REQUIRE_VIRTUALENV=true
 #install 'gem install' ${gems[@]}
 install 'clib install' ${clibs[@]}
 install 'bpkg install' ${bpkgs[@]}
@@ -197,9 +200,18 @@ install 'apm install' ${apms[@]}
 mas list | cut -d' ' -f1 | sort -n > /tmp/mas_exist_apps
 mas_to_install=(
 )
-printf "%s\n" "${mas_to_install[@]}" | sort -n > /tmp/mas_to_install
-mas_apps=`comm -13 /tmp/mas_exist_apps /tmp/mas_to_install`
-install 'mas install' ${mas_apps[@]} 
+if [ ${#mas_to_install[@]} -gt 0 ]; then 
+  exist_apps_count=`wc -w /tmp/mas_exist_apps`
+  if [ $exist_apps_count -gt 0 ]; then
+    printf "%s\n" "${mas_to_install[@]}" | sort -n > /tmp/mas_to_install
+    mas_apps=`comm -13 /tmp/mas_exist_apps /tmp/mas_to_install`
+    install 'mas install' ${mas_apps[@]} 
+  else
+    install 'mas install' ${mas_to_install[@]}
+  fi
+else 
+  fancy_echo 'No MAS apps to install' 
+fi
 
 # fancy_echo "Upgrading bash ..."
 # sudo bash -c "echo $(brew --prefix)/bin/bash #>> /private/etc/shells"
@@ -213,7 +225,7 @@ if [ -d "$GO_DIR" ]; then
   mkd "$GO_DIR"
   append_to_profile 'export GOPATH="$GO_DIR"' 1
   append_to_profile 'export PATH=$PATH:$GOPATH/bin' 1
-#fi
+fi
 
 fancy_echo "Configuring Ruby ..."
 ruby_version="$(find_latest_ruby)"
@@ -238,7 +250,9 @@ fancy_echo "Upgrading ..."
 #Instead of depending on system python do a brew install python and 
 #curl https://bootstrap.pypa.io/get-pip.py > get-pip.py
 # python get-pip.py --user
+PIP_REQUIRE_VIRTUALENV=''
 pip install --upgrade pip setuptools
+PIP_REQUIRE_VIRTUALENV=true
 brew upgrade --all
 mas outdated
 mas upgrade

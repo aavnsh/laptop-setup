@@ -1,5 +1,7 @@
+[github]
+  user = aavnsh
 [user]
-  name = aavnsh
+  name = Avinash Anand
   email = avinash+github@zenefits.com
 [core]
   editor = subl -n -w

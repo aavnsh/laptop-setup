@@ -204,7 +204,7 @@ httpDebug () { /usr/bin/curl $@ -o /dev/null -w "dns: %{time_namelookup} connect
 #   ---------------------------------------------------------
 #   VIRTUAL ENV
 #   ---------------------------------------------------------
-won() { workon "$1"; cdvirtualenv "$1"; }
+won() { workon "$1"; cdvirtualenv; }
 
 
 #   ---------------------------------------------------------
@@ -246,3 +246,70 @@ if [ -f "$HOME/.fzf-functions" ]; then
   source $HOME/.fzf-functions
 fi
 
+#   ---------------------------------------------------------
+#   Chrome Related
+#   ---------------------------------------------------------
+
+get_chrome_profile_by_name() {
+    chrome_dir="$HOME/Library/Application Support/Google/Chrome"
+    chrome_state="$chrome_dir/Local State"
+    local search_string="$1"
+    if [ -f "$chrome_states" ]; then
+        ans1=`cat "$chrome_state" | jq --arg search_pattern "(?i)$search_string" '.profile.info_cache | to_entries[] |  {"profile": .key, "name": .value.name, "email": .value.user_name} | select(.name | test($search_pattern))'`
+        #echo $ans1
+        read cnt <<< $(echo $ans1| awk -F'profile' '{c+=NF-1}END{print c}')
+        #echo $cnt
+        if [ $cnt -eq 1 ]; then
+            eval "$2="`echo "$ans1" | jq '.profile'`""
+        else
+            echo 'Multiple or No Match Found'
+        fi
+    fi    
+}
+
+get_chrome_profile_diff() {
+    profile1='';get_chrome_profile_by_name "$1" profile1
+    profile2='';get_chrome_profile_by_name "$2" profile2
+    chrome_dir="$HOME/Library/Application Support/Google/Chrome"
+    if [[ "$profile1" && "$profile2" ]]; then
+        profile1_dir="$chrome_dir/$profile1"
+        profile2_dir="$chrome_dir/$profile2"
+        find "$profile1_dir/Extensions" -name manifest.json -exec cat {} \; | jq '.name' | grep -v '^\"__' | sort | uniq > /tmp/profile1_ext
+        find "$profile2_dir/Extensions" -name manifest.json -exec cat {} \; | jq '.name' | grep -v '^\"__' | sort | uniq > /tmp/profile2_ext
+        to_install=`comm -3 /tmp/profile1_ext /tmp/profile2_ext`
+        echo "Extensions to be Installed:"
+        echo "$1($profile1) VS $2($profile2):"
+        echo "$to_install"
+    fi
+}
+
+#   ---------------------------------------------------------
+#   SSH
+#   ---------------------------------------------------------
+
+SSH_ENV="$HOME/.ssh/environment"
+
+function start_agent {
+    echo "Initialising new SSH agent..."
+    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+    echo succeeded
+    chmod 600 "${SSH_ENV}"
+    . "${SSH_ENV}" > /dev/null
+    /usr/bin/ssh-add;
+}
+
+# Source SSH settings, if applicable
+
+if [ -f "${SSH_ENV}" ]; then
+    . "${SSH_ENV}" > /dev/null
+    #ps ${SSH_AGENT_PID} doesn't work under cywgin
+    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent > /dev/null || {
+        start_agent;
+    }
+else
+    start_agent;
+fi
+# Add Keys to Agent
+ssh-add -l | cut -d ' ' -f3 | sort > /tmp/added_ssh_keys
+grep -l "BEGIN RSA PRIVATE KEY" ~/.ssh/* | sort > /tmp/total_ssh_keys
+comm -13 /tmp/added_ssh_keys /tmp/total_ssh_keys | xargs ssh-add -K

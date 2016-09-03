@@ -1,0 +1,18 @@
+#!/bin/sh
+
+[[ -x `command -v curl` ]] >/dev/null 2>&1 && CMD="curl -#L"
+
+TMPDIR="/tmp/dotfiles"
+
+if [ -z "$CMD" ]; then
+  echo "No curl or wget available. Aborting."
+else
+  echo "Copying dotfiles to $TMPDIR "
+  if [ ! -d "$TMPDIR" ]; then
+    mkdir "$TMPDIR"
+  fi
+  eval "$CMD https://github.com/aavnsh/laptop-setup/tarball/master | tar -xz -C $TMPDIR --strip-components=1 --exclude='{.gitignore}'"
+fi
+echo "\n\nChecking if git HEAD and locally installed are different"
+diff -qr $TMPDIR ~/dotfiles
+echo "\n\ndone"

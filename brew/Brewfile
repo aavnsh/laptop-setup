@@ -26,13 +26,19 @@ brew "rbenv" #https://github.com/rbenv/rbenv
 # Dev tools
 
 # Git
+brew "python", args: [ 'universal', 'framework'] 
 brew "git"
 brew "git-lfs"
 
 
 # Libraries
 brew "openssl"
+# brew "libyaml" # should come after openssl
 brew "gpg"
+brew "swig"
+brew "libxml2"
+brew "libxslt"
+brew "imagemagick"
 
 # Languages
 
@@ -41,6 +47,7 @@ brew "gpg"
 mas "Xcode", id: 497799835
 mas "Dash", id: 449589707
 brew "fzf" # (https://github.com/junegunn/fzf) Fuzzy Commany Finder
+brew "jq" # Like Sed but for JSON https://stedolan.github.io/jq/
 
 
 # Misc tools
@@ -56,12 +63,11 @@ brew "tree" #Tree (http://mama.indstate.edu/users/ice/tree/): A directory listin
 brew "trash"
 
 #Services
-# brew "imagemagick"
-# brew "redis", restart_service: true
-# brew "libyaml" # should come after openssl
 # # Databases
 # brew "postgres", restart_service: true
-# brew "redis", restart_service: true
+brew "redis", restart_service: true
+brew "rabbitmq", restart_service: true
+brew 'mysql', restart_service: true, conflicts_with: ['homebrew/versions/mysql56']
 
 
 
@@ -76,7 +82,10 @@ cask "skype", args: { appdir: '/Applications' }
 cask "slack", args: { appdir: '/Applications' }
 cask "sublime-text", args: { appdir: '/Applications' }
 cask "alfred", args: { appdir: '/Applications' }
-#cask 'java' unless system '/usr/libexec/java_home --failfast'
+cask "spectacle", args: { appdir: '/Applications' } # Window Manager
+cask 'java' unless system '/usr/libexec/java_home --failfast'
+cask 'mouse-locator'
+cask 'docker-toolbox'
 
 mas "Skitch", id:425955336
 mas "HeliumLift", id: 1018899653 

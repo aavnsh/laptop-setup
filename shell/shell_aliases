@@ -47,7 +47,8 @@ alias library="cd $HOME/Library"
 #alias edit='subl'                           # edit:         Opens any file in sublime editor
 # Open specified files in Sublime Text
 # "subl ." will open the current directory in Sublime
-alias subl='open -a "Sublime Text"'
+#alias subl='open -a "Sublime Text"'
+alias e="/usr/local/bin/subl"
 
 #   ----------------------------------------------------------
 # Colored up cat!
