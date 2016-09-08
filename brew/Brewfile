@@ -84,11 +84,17 @@ cask "sublime-text", args: { appdir: '/Applications' }
 cask "alfred", args: { appdir: '/Applications' }
 cask "spectacle", args: { appdir: '/Applications' } # Window Manager
 cask 'java' unless system '/usr/libexec/java_home --failfast'
-cask 'mouse-locator'
-cask 'docker-toolbox'
+cask 'mouse-locator' , args: { appdir: '/Applications' }
+cask 'docker-toolbox' , args: { appdir: '/Applications' }
+#Have to fix cask, manually download from http://snip.qq.com
+#cask 'snip', args: { appdir: '/Applications' } #Screenshot capture and annotate 
+cask 'monolingual' , args: { appdir: '/Applications' }
+cask 'bartender' , args: { appdir: '/Applications' } #https://www.macbartender.com/ Organize Menu Bar Apps
+#https://www.codeweavers.com/products/crossover-mac Run Windows Apps on MAC
 
 mas "Skitch", id:425955336
 mas "HeliumLift", id: 1018899653 
 mas "OneDrive", id: 823766827 
 mas "Slack", id: 803453959
 mas "Caffeine", id: 411246225
+mas "Patterns", id: 429449079  # Paid app - 2.99 - for quick regex debugging

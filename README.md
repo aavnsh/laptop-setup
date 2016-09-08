@@ -162,6 +162,11 @@ Let's create a shortcut so we can launch Sublime Text from the command-line:
 
 Now I can open a file with `$ subl myfile.py` or start a new project in the current directory with `$ subl .`.
 
+### Extend Sublime's Functionality 
+- Install [Package Control](https://packagecontrol.io/installation)
+- Open Package Control `Command+Shift+p`
+	- Add [Pretty JSON](https://packagecontrol.io/packages/Pretty%20JSON) Package
+
 ## Python
 
 OS X, like Linux, ships with [Python](http://python.org/) already installed. But you don't want to mess with the system Python (some system tools rely on it, etc.), so we'll install our own version with Homebrew. It will also allow us to get the very latest version of Python 2.7.
