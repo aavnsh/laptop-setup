@@ -72,6 +72,6 @@ function prompt_help {
     echo " $: There are stashed changes"
     echo " =: The branch is equal with the remote branch"
     echo " <: The branch is behind the remote branch (can be fast-forwarded)"
-    echo " >: The branch is ahead of the remote branch (remote branch can be fast-forwarded)""
-    echo " <>: The branch and remote branch have diverged (will need merge)""
+    echo " >: The branch is ahead of the remote branch (remote branch can be fast-forwarded)"
+    echo " <>: The branch and remote branch have diverged (will need merge)"
 }
