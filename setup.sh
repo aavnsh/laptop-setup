@@ -111,6 +111,8 @@ print_success() {
   printf "\e[0;32m  [✔] $1\e[0m\n"
 }
 
+cd $HOME/dotfiles
+
 source "install/configs.sh"
 
 # Get current dir (so run this script from anywhere)
