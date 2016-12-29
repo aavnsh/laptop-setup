@@ -358,9 +358,8 @@ You can find the MySQL Workbench download [here](http://www.mysql.com/downloads/
 
 When installing Ruby, best practice is to use [NVM](https://github.com/creationix/nvm) (Node Version Manager)
 
-    $ brew update
-    $ brew install nvm
-    $ nvm install 4
+    $ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.1/install.sh | NVM_DIR="$HOME/.nvm"  bash
+    $ nvm install 6 # or the current LTS
 
 We may need to tell npm where to find the Xcode Command Line Tools, by running:
 
@@ -374,6 +373,7 @@ Node modules are installed locally in the `node_modules` folder of each project 
 
     $ npm install -g coffee-script
     $ npm install -g grunt-cli
+    $ npm install -g gulp
 
 ### Npm usage
 
@@ -701,7 +701,7 @@ Here is a quick list of some apps I use, and that you might find useful as well:
 - F.lux
 - CloudPlane
 - and others - please check the Brewfile in the setup scripts
-
+- https://mailcatcher.me/ for a developer smtp server + gui
 ## Credits
 [nicolashery](https://github.com/nicolashery/mac-dev-setup)
 

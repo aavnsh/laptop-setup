@@ -18,7 +18,7 @@ brew "xz"
 brew "go"
 brew "mas"
 brew "clib"
-brew "nvm" # (https://github.com/creationix/nvm) instead
+#brew "nvm" # (https://github.com/creationix/nvm) instead
       # of installing Node directly. This gives me more explicit control over
       # which version I'm using.
 brew "rbenv" #https://github.com/rbenv/rbenv
@@ -27,6 +27,7 @@ brew "rbenv" #https://github.com/rbenv/rbenv
 
 # Git
 brew "python", args: [ 'universal', 'framework'] 
+brew "python3"  
 brew "git"
 brew "git-lfs"
 
@@ -51,7 +52,7 @@ brew "jq" # Like Sed but for JSON https://stedolan.github.io/jq/
 
 
 # Misc tools
-brew "mackup"
+brew "mackup" 
 brew "thefuck" # (https://github.com/nvbn/thefuck): Correct your previous command. Note
               #   that this needs to be added to zsh or bash. See the project README.
 brew "coreutils"
@@ -61,6 +62,7 @@ brew "hh"
 brew "tree" #Tree (http://mama.indstate.edu/users/ice/tree/): A directory listing utility
 #   that produces a depth indented listing of files.
 brew "trash"
+brew "findutils" # Gnu Find Utils
 
 #Services
 # # Databases

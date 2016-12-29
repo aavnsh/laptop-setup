@@ -134,7 +134,9 @@ NVM_DIR="$HOME/.nvm"
 if [ ! -d "$NVM_DIR" ]; then
   mkdir "$NVM_DIR"
   append_to_profile 'export NVM_DIR="$NVM_DIR"' 1
-  append_to_profile '. "$(brew --prefix nvm)/nvm.sh"' 1
+  append_to_profile '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm' 1
+  append_to_profile '[[ -r $NVM_DIR/bash_completion ]] && . $NVM_DIR/bash_completion' 1
+  #append_to_profile '. "$(brew --prefix nvm)/nvm.sh"' 1
 fi 
 
 if [ ! -d "/Applications/Xcode.app" ]; then
@@ -175,15 +177,15 @@ if [ -x "$(command -v fzf)" ]; then
   append_to_profile "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" 1
 fi
 
-if [ command -v nvm ]
-then
-  echo "Installing a stable version of Node..."
+#if [ command -v nvm ]
+#then
+#  echo "Installing a stable version of Node..."
   # Install the stable version of node.
-  nvm install 4
+#  nvm install 4
   # Switch to the installed version
-  nvm use 4
+#:  nvm use 4
   # Use the stable version of node by default.
-  nvm alias default 4
+#  nvm alias default 4
 fi
 
 fancy_echo "Installing secondary packages ..."
