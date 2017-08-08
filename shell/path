@@ -6,7 +6,8 @@ PATH=/opt/local/sbin:$PATH
 PATH=$HOME/bin:$PATH
 PATH=$HOME/.node/bin:$PATH
 PATH=/usr/local/MacGPG2/bin:$PATH
-PATH=$HOME/myinstalled/prince/bin:$PATH
+PATH=$HOME/MyInstalled/prince/bin:$PATH
+PATH=$HOME/MyInstalled:$PATH
 PATH=$HOME/.local/bin:$PATH
 PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
 export PATH
