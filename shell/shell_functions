@@ -309,7 +309,13 @@ if [ -f "${SSH_ENV}" ]; then
 else
     start_agent;
 fi
+# Enable the lines below if you want the ssh keys to be added to the ssh agent
+# This becomes a pain when you have more than a couple of keys because
+# the agent sends all keys and you may see auth rejections from your server
+# before your key is even sent
+# the solution in that case is to remove all keys and just add the specific key
+# you need
 # Add Keys to Agent
-ssh-add -l | cut -d ' ' -f3 | sort > /tmp/added_ssh_keys
-grep -l "BEGIN RSA PRIVATE KEY" ~/.ssh/* | sort > /tmp/total_ssh_keys
-comm -13 /tmp/added_ssh_keys /tmp/total_ssh_keys | xargs ssh-add -K
+# ssh-add -l | cut -d ' ' -f3 | sort > /tmp/added_ssh_keys
+# grep -l "BEGIN RSA PRIVATE KEY" ~/.ssh/* | sort > /tmp/total_ssh_keys
+# comm -13 /tmp/added_ssh_keys /tmp/total_ssh_keys | xargs ssh-add -K
