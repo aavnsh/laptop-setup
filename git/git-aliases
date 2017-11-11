@@ -23,7 +23,7 @@ alias gru="git status --porcelain | grep -o '^??.*$' | cut -d' ' -f2 | xargs rm 
 alias gamend="git commit --amend -m"   #Git amend latest commit message
 alias grefresh="git checkout master && cleanupDS && git pull && git fetch -p"
 alias gbranchprune="git branch -r | awk '{print $1}' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '{print $1}' | xargs git branch -d"
-
+# alias gbranchprune="git branch --merged | grep -v '^* master$' | grep -v '^  master$' | xargs git branch -d"
 
 #git work done
 workdone(){
