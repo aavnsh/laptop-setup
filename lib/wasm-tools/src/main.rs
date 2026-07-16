@@ -1,0 +1,11 @@
+// Copyright (c) 2015-2026 Dotfiles. All rights reserved.
+use std::time::SystemTime;
+
+fn main() {
+    let now = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs();
+
+    println!(r#"{{"status": "ok", "timestamp": {}, "engine": "wasm"}}"#, now);
+}

@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034
+# Copyright (c) 2015-2026 Dotfiles. All rights reserved.
+# Base64 Transcoder with URL-safe support.
+# Part of Dotfiles v0.2.495
+
+set -euo pipefail
+
+# ANSI Colors
+PURPLE='\033[38;5;135m'
+GRAY='\033[38;5;243m'
+RED='\033[38;5;196m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+# Check if TTY for interactive components (though b64 is mostly non-interactive)
+IS_TTY=0
+if [ -t 1 ]; then IS_TTY=1; fi
+
+show_help() {
+  if [ "$IS_TTY" -eq 1 ]; then
+    printf '%b\n' "${BOLD}${PURPLE}󰇧 Base64 Transcoder${NC} ${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+  else
+    echo "Base64 Transcoder"
+  fi
+
+  echo "Usage: b64 [options] [string]"
+  echo "Options:"
+  echo "  -e, --encode    Encode to base64 (default)"
+  echo "  -d, --decode    Decode from base64"
+  echo "  -u, --url       URL-safe mode"
+  echo "  -h, --help      Show this help"
+  exit 0
+}
+
+MODE="encode"
+URL_SAFE=0
+INPUT=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -e | --encode)
+      MODE="encode"
+      shift
+      ;;
+    -d | --decode)
+      MODE="decode"
+      shift
+      ;;
+    -u | --url)
+      URL_SAFE=1
+      shift
+      ;;
+    -h | --help) show_help ;;
+    *)
+      INPUT="$1"
+      shift
+      ;;
+  esac
+done
+
+if [ -z "$INPUT" ]; then
+  if [ ! -t 0 ]; then
+    INPUT=$(cat -)
+  else
+    show_help
+  fi
+fi
+
+if [ "$MODE" = "encode" ]; then
+  if [ "$URL_SAFE" -eq 1 ]; then
+    printf "%s" "$INPUT" | base64 | tr '+/' '-_' | tr -d '='
+  else
+    printf "%s" "$INPUT" | base64
+  fi
+else
+  # Add padding if needed for URL-safe decode
+  if [ "$URL_SAFE" -eq 1 ]; then
+    INPUT=$(printf "%s" "$INPUT" | tr '-_' '+/')
+    while [ $((${#INPUT} % 4)) -ne 0 ]; do INPUT="${INPUT}="; done
+  fi
+  # macOS/BSD base64 uses -D for decode; GNU coreutils uses -d.
+  printf "%s" "$INPUT" | base64 -d 2>/dev/null || printf "%s" "$INPUT" | base64 -D
+fi
+echo ""

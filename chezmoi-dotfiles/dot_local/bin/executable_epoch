@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034
+## Epoch Converter — Convert between Unix timestamps and human-readable dates.
+##
+## Bidirectional conversion between epoch timestamps and date strings.
+## Supports both seconds and milliseconds precision.
+##
+## # Requirements
+## - date: Core utility (coreutils or macOS built-in)
+##
+## # Usage
+## epoch                       # Show current epoch time
+## epoch -m                    # Show current epoch in milliseconds
+## epoch 1234567890            # Convert epoch to date
+## epoch -r "2024-01-15"       # Convert date string to epoch
+##
+## # Platform Notes
+## - Linux: Uses date -d for parsing
+## - macOS: Uses date -j -f for parsing
+
+set -euo pipefail
+
+# --- UI Theme ---
+PURPLE='\033[38;5;141m'
+CYAN='\033[38;5;86m'
+GRAY='\033[38;5;244m'
+NC='\033[0m'
+
+REVERSE=false
+MILLIS=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -r | --reverse)
+      REVERSE=true
+      shift
+      ;;
+    -m | --millis)
+      MILLIS=true
+      shift
+      ;;
+    -h | --help)
+      printf '%b\n' "${PURPLE}epoch${NC} ${GRAY}convert to/from unix time${NC}"
+      echo "Usage: epoch [options] [value]"
+      echo "  -r, --reverse   Convert date string to epoch"
+      echo "  -m, --millis    Use milliseconds"
+      exit 0
+      ;;
+    *) break ;;
+  esac
+done
+
+if $REVERSE; then
+  STR="${1:-}"
+  [[ -z "$STR" ]] && exit 1
+  date -d "$STR" +%s 2>/dev/null || date -j -f "%Y-%m-%d" "$STR" +%s 2>/dev/null
+elif [[ $# -gt 0 ]]; then
+  EPOCH="$1"
+  [[ ${#EPOCH} -gt 10 ]] && EPOCH=$((EPOCH / 1000))
+  date -d "@$EPOCH" 2>/dev/null || date -r "$EPOCH" 2>/dev/null
+else
+  if $MILLIS; then
+    # GNU date supports %3N; macOS/BSD emits a literal 'N'. Try gdate, then
+    # a python fallback, before degrading to seconds*1000.
+    if date +%s%3N 2>/dev/null | grep -qE '^[0-9]+$'; then
+      date +%s%3N
+    elif command -v gdate >/dev/null 2>&1; then
+      gdate +%s%3N
+    elif command -v python3 >/dev/null 2>&1; then
+      python3 -c 'import time; print(int(time.time()*1000))'
+    else
+      printf '%s000\n' "$(date +%s)"
+    fi
+  else
+    date +%s
+  fi
+fi

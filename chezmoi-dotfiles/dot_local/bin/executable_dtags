@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Copyright (c) 2015-2026 Dotfiles. All rights reserved.
+## dtags — List sorted tags for a Docker Hub image.
+##
+## # Usage
+##   dtags python
+##   dtags node
+##   dtags ubuntu
+
+set -euo pipefail
+
+for cmd in curl jq; do
+  if ! command -v "$cmd" &>/dev/null; then
+    echo "dtags requires $cmd" >&2
+    exit 1
+  fi
+done
+
+image="${1:-}"
+
+if [[ -z "${image}" ]]; then
+  echo "Usage: dtags <image>" >&2
+  exit 1
+fi
+
+tags="$(curl --silent \
+  "https://registry.hub.docker.com/v2/repositories/library/${image}/tags?page_size=1000" |
+  jq -r ".results[].name")"
+
+# Buffer first, then choose the sorter — the direct `sort -V || sort -t.`
+# chain consumes stdin on the first attempt so the fallback got nothing.
+printf '%s\n' "${tags}" | sort -V 2>/dev/null \
+  || printf '%s\n' "${tags}" | sort -t. -k1,1n -k2,2n -k3,3n

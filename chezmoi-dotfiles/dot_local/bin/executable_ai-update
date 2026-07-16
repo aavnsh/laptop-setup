@@ -1,0 +1,227 @@
+#!/usr/bin/env bash
+## AI Update — Dotfiles AI workflow updater for cross-platform environments.
+##
+## Updates all AI-related tools and runtimes including mise, npm globals,
+## pipx tools, Ollama, and LM Studio. Auto-detects installation methods.
+##
+## # Requirements
+## - curl: For downloading updates
+## - sudo: For system-level updates (Linux)
+## - zstd: For Ollama archive extraction (Linux)
+##
+## # Usage
+## ai-update                   # Update all AI tools
+##
+## # Platform Notes
+## - macOS: Updates via Homebrew where applicable
+## - Linux: Updates via APT, manual binaries, or pipx
+## - WSL: Full Linux support
+
+set -euo pipefail
+
+# --- Configuration & Theme ---
+CYAN='[38;5;86m'
+PURPLE='[38;5;141m'
+GREEN='[38;5;84m'
+YELLOW='[38;5;227m'
+RED='[38;5;203m'
+GRAY='[38;5;244m'
+NC='[0m'
+BOLD='[1m'
+
+# --- UI Components ---
+log_header() {
+  printf '%b\n' "
+${BOLD}${PURPLE}Updating AI Environment${NC}"
+  printf '%b\n' "${GRAY}-----------------------------------------------------------${NC}"
+}
+
+step() { echo -ne "${CYAN}->${NC} ${BOLD}$1...${NC} "; }
+ok() { printf '%b\n' "${GREEN}done${NC}"; }
+skip() { printf '%b\n' "${YELLOW}skipped${NC} ${GRAY}($1)${NC}"; }
+err() { printf '%b\n' "${RED}error${NC}
+   ${RED}$1${NC}"; }
+
+# --- Initialization ---
+log_header
+
+# Pre-auth sudo to avoid mid-script interruptions
+if [[ "$(uname -s)" == "Linux" ]]; then
+  step "Authenticating sudo"
+  if sudo -v; then ok; else
+    err "Sudo required for system updates"
+    exit 1
+  fi
+fi
+
+# --- 1. mise Core (Multi-Method Detection) ---
+if command -v mise >/dev/null 2>&1; then
+  step "Checking mise core"
+  if [[ "$(uname -s)" == "Linux" ]] && command -v pacman >/dev/null 2>&1 && pacman -Qs mise >/dev/null 2>&1; then
+    # Handle Arch/CachyOS AUR/Official package
+    sudo pacman -S --noconfirm mise >/dev/null 2>&1 || true
+    ok
+  elif [[ "$(uname -s)" == "Linux" ]] && command -v dpkg >/dev/null 2>&1 && dpkg -s mise >/dev/null 2>&1; then
+    # Handle your ZorinOS APT installation
+    sudo apt update -y -o Dir::Etc::sourcelist="sources.list.d/jdx.list" >/dev/null 2>&1 || true
+    sudo apt install --only-upgrade -y mise >/dev/null 2>&1
+    ok
+  elif command -v brew >/dev/null 2>&1 && brew list mise >/dev/null 2>&1; then
+    # Handle macOS/Linux Brew installation
+    brew upgrade mise >/dev/null 2>&1
+    ok
+  else
+    # Fallback for standalone binary installation
+    if mise self-update -y >/dev/null 2>&1; then ok; else skip "manual update needed"; fi
+  fi
+else
+  skip "mise not found"
+fi
+
+# --- 2. System & Language Packages ---
+
+# Homebrew
+if command -v brew >/dev/null 2>&1; then
+  step "Homebrew packages"
+  brew update >/dev/null && brew upgrade --quiet >/dev/null
+  ok
+fi
+
+# NPM Globals (via mise)
+if command -v mise >/dev/null 2>&1; then
+  step "NPM (claude, agy, etc)"
+  mise exec node -- npm update -g --audit=false >/dev/null 2>&1
+  ok
+
+  step "Kiro CLI"
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    skip "managed by Kiro app bundle via mise plugin"
+  elif mise upgrade kiro-cli >/dev/null 2>&1; then
+    ok
+  else
+    skip "mise plugin update unavailable"
+  fi
+fi
+
+# Pipx (aider, sgpt)
+if command -v pipx >/dev/null 2>&1; then
+  step "Pipx tools"
+  pipx upgrade-all >/dev/null 2>&1
+  ok
+fi
+
+# --- 3. Specialized AI Binaries ---
+
+# Claude Code (self-updating native binary)
+if command -v claude >/dev/null 2>&1; then
+  step "Claude Code"
+  if claude update --force >/dev/null 2>&1; then ok; else skip "already up to date"; fi
+fi
+
+# Goose (Block — native binary, re-run installer to update)
+if command -v goose >/dev/null 2>&1 || [ -x "$HOME/.local/bin/goose" ]; then
+  step "Goose"
+  goose_installer="$(umask 077 && mktemp)"
+  if curl -fsSL -o "$goose_installer" https://github.com/block/goose/releases/download/stable/download_cli.sh 2>/dev/null &&
+    [ "$(wc -c <"$goose_installer")" -le 524288 ] && head -1 "$goose_installer" | grep -q '^#!'; then
+    if bash "$goose_installer" >/dev/null 2>&1; then ok; else skip "installer failed"; fi
+  else
+    skip "could not fetch installer"
+  fi
+  rm -f "$goose_installer"
+fi
+
+# Antigravity CLI — agy (native binary, re-run installer to update)
+if command -v agy >/dev/null 2>&1 || [ -x "$HOME/.local/bin/agy" ]; then
+  step "Antigravity CLI (agy)"
+  agy_installer="$(umask 077 && mktemp)"
+  if curl -fsSL -o "$agy_installer" https://antigravity.google/cli/install.sh 2>/dev/null &&
+    [ "$(wc -c <"$agy_installer")" -le 262144 ] && head -1 "$agy_installer" | grep -q '^#!'; then
+    if bash "$agy_installer" >/dev/null 2>&1; then ok; else skip "installer failed"; fi
+  else
+    skip "could not fetch installer"
+  fi
+  rm -f "$agy_installer"
+fi
+
+# Ollama (Verified Manual Override)
+if command -v ollama >/dev/null 2>&1; then
+  if [[ "$(uname -s)" == "Linux" ]]; then
+    step "Ollama (Manual Deployment)"
+    arch="$(uname -m)"
+    case "$arch" in
+      x86_64 | amd64) ollama_arch="amd64" ;;
+      aarch64 | arm64) ollama_arch="arm64" ;;
+      *) ollama_arch="" ;;
+    esac
+
+    if [[ -n "$ollama_arch" ]]; then
+      # Check for updates by comparing local vs remote version
+      current_ver="$(ollama --version | awk '{print $NF}' | tr -d '[:space:]')"
+      # This is a bit slow but safer than downloading every time
+      latest_ver="$(curl -fsSL -I https://github.com/ollama/ollama/releases/latest | grep -i location | sed 's/.*\/v//;s///' | tr -d '[:space:]')"
+
+      if [[ "$current_ver" == "$latest_ver" ]]; then
+        skip "already up to date"
+      else
+        tmp_tar="$(umask 077 && mktemp)"
+        trap 'rm -f "$tmp_tar"' EXIT
+        tar_url="https://ollama.com/download/ollama-linux-${ollama_arch}.tar.zst"
+
+        if curl -fsSL --retry 2 "$tar_url" -o "$tmp_tar" && zstd -t "$tmp_tar" >/dev/null 2>&1; then
+          # Stop service safely
+          if command -v systemctl >/dev/null 2>&1; then
+            sudo systemctl stop ollama 2>/dev/null || true
+          fi
+
+          # Extract
+          zstd -dc "$tmp_tar" | sudo tar -x -C /usr/local >/dev/null
+
+          # Ensure permissions
+          sudo chmod +x /usr/local/bin/ollama
+
+          # Restart if systemd exists
+          if command -v systemctl >/dev/null 2>&1; then
+            sudo systemctl daemon-reload
+            sudo systemctl start ollama 2>/dev/null || true
+          fi
+          ok
+        else
+          err "Integrity check failed"
+        fi
+      fi
+    else
+      skip "unsupported arch"
+    fi
+  else
+    # macOS users typically use the .app or Brew
+    step "Ollama (macOS)"
+    if command -v brew >/dev/null 2>&1 && brew upgrade ollama --cask >/dev/null 2>&1; then
+      ok
+    else
+      skip "Update via App"
+    fi
+  fi
+fi
+
+# LM Studio Runtime
+if command -v lms >/dev/null 2>&1; then
+  step "LM Studio Runtime"
+  lms runtime update >/dev/null 2>&1
+  ok
+fi
+
+# --- 4. Final Summary ---
+printf '%b\n' "${GRAY}-----------------------------------------------------------${NC}"
+printf '%b\n' "${GREEN}${BOLD}Dotfiles Environment Ready${NC}"
+
+# Version Report
+printf '%b\n' "
+${BOLD}System Version Status:${NC}"
+printf "%b%-12s%b %s\n" "${GRAY}" "Node:" "${NC}" "$(node -v 2>/dev/null || echo 'N/A')"
+printf "%b%-12s%b %s\n" "${GRAY}" "Kiro:" "${NC}" "$(kiro-cli --version 2>/dev/null | awk '{print $NF}' || echo 'N/A')"
+printf "%b%-12s%b %s\n" "${GRAY}" "Ollama:" "${NC}" "$(ollama --version 2>/dev/null | awk '{print $NF}' || echo 'N/A')"
+printf "%b%-12s%b %s\n" "${GRAY}" "Pipx:" "${NC}" "$(pipx --version 2>/dev/null || echo 'N/A')"
+printf "%b%-12s%b %s\n" "${GRAY}" "Mise:" "${NC}" "$(mise --version 2>/dev/null | awk '{print $1}' || echo 'N/A')"
+
+trap - EXIT
