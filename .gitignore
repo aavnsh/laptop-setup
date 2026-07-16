@@ -1,7 +1,4 @@
-.Python
-.extras
-bin/
-include/
-lib/
-share/
 pip-selfcheck.json
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v4/cache.db
