@@ -12,7 +12,7 @@ alias wth='curl -s "wttr.in/?format=3"'
 
 # Convenience shortcuts
 if command -v dot >/dev/null 2>&1; then
-  alias d='dot'
+  alias dt='dot'
 fi
 if command -v epoch >/dev/null 2>&1; then
   alias i='epoch'

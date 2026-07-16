@@ -139,7 +139,7 @@ if command -v gh >/dev/null; then
 fi
 
 if command -v podman >/dev/null; then
-  alias p='podman'
+  alias pdm='podman'
   alias pc='podman compose'
 fi
 
