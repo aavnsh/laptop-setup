@@ -25,7 +25,7 @@ alias hkgitr='heroku git:remote'
 
 # Keys aliases
 # Display your SSH keys.
-alias hkk='heroku keys'
+alias hkkey='heroku keys'
 
 # Add an SSH key for a user.
 alias hkka='heroku keys:add'

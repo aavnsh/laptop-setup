@@ -5,12 +5,12 @@
 _CD_SHORTCUTS_LOADED=1
 
 # Parent Directory Shortcuts
-alias -- -='cd -'   # Go to the previous directory
-alias ..='up 1'     # Go up one level
-alias ...='up 2'    # Go up two levels
-alias ....='up 3'   # Go up three levels
-alias .....='up 4'  # Go up four levels
-alias ......='up 5' # Go up five levels
+alias -- -='cd -'                         # Go to the previous directory
+alias ..='cd_with_history ..'             # Go up one level
+alias ...='cd_with_history ../..'         # Go up two levels
+alias ....='cd_with_history ../../..'     # Go up three levels
+alias .....='cd_with_history ../../../..' # Go up four levels
+alias ......='cd_with_history ../../../../..' # Go up five levels
 
 # Home and Frequently Used Directories
 # Only create aliases for directories that exist
@@ -20,7 +20,7 @@ alias ......='up 5' # Go up five levels
 [[ -d "${DOCS_DIR}" ]] && alias doc='cd_with_history "${DOCS_DIR}"'   # Documents
 [[ -d "${DOTF_DIR}" ]] && alias dotf='cd_with_history "${DOTF_DIR}"'  # Dotfiles
 [[ -d "${DOWN_DIR}" ]] && alias dwn='cd_with_history "${DOWN_DIR}"'   # Downloads
-[[ -d "${DOWN_DIR}" ]] && alias hom='cd_with_history "${HOME_DIR}"'   # Home Directory
+[[ -d "${HOME_DIR}" ]] && alias hom='cd_with_history "${HOME_DIR}"'   # Home Directory
 [[ -d "${MUSIC_DIR}" ]] && alias mus='cd_with_history "${MUSIC_DIR}"' # Music
 [[ -d "${PICS_DIR}" ]] && alias pic='cd_with_history "${PICS_DIR}"'   # Pictures
 [[ -d "${VIDS_DIR}" ]] && alias vid='cd_with_history "${VIDS_DIR}"'   # Videos

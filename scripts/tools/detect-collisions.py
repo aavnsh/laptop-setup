@@ -12,7 +12,8 @@ import sys
 # named in .chezmoiroot (typically "defaults/"). Prefer the
 # descended path; fall back to the old top-level layout for
 # backwards compatibility.
-_DOTFILES_ROOT = os.path.expanduser("~/.dotfiles")
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_DOTFILES_ROOT = os.path.abspath(os.path.join(_SCRIPT_DIR, "../.."))
 _CHEZMOIROOT_FILE = os.path.join(_DOTFILES_ROOT, ".chezmoiroot")
 
 

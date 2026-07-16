@@ -7,7 +7,7 @@ alias dai='dot ai'  # the cockpit
 alias daid='dot ai' # was: dot ai dashboard
 alias daish='dot ai'
 
-alias dcl='dot ai claude'
+alias dclc='dot ai claude'
 alias dcla='dot ai claude --style architect'
 alias dclh='dot ai claude --style hardener'
 alias dclr='dot ai claude --style refactor'
@@ -17,7 +17,7 @@ alias dagya='dot ai agy --style architect'
 alias dagyh='dot ai agy --style hardener'
 alias dagyr='dot ai agy --style refactor'
 
-alias dki='dot ai kiro'
+alias dkio='dot ai kiro'
 alias dkia='dot ai kiro --style architect'
 alias dkih='dot ai kiro --style hardener'
 alias dkir='dot ai kiro --style refactor'
@@ -37,7 +37,7 @@ if command -v claude &>/dev/null; then
   alias cl='claude'
   alias clc='claude --chat'
   # Provide context as a system prompt if possible (assuming file read support or piping)
-  alias clp='claude < ~/.config/ai/identity.md'
+  alias clid='claude < ~/.config/ai/identity.md'
 fi
 
 # OpenAI Codex CLI

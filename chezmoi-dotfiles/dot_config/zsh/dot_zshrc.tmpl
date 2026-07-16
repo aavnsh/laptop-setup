@@ -442,10 +442,11 @@ if [[ "${DOTFILES_FAST}" != "1" ]]; then
     [[ "${DOTFILES_LAYERS_LOAD_STATE}" == "stage1" || "${DOTFILES_LAYERS_LOAD_STATE}" == "ready" ]] && return 0
     DOTFILES_LAYERS_LOAD_STATE=loading
     unset DOTFILES_LAYERS_LOAD_STATUS
-    echo "--> Loading d.c.z.zshrc .c/s/10+40+50+91"
+    echo "--> Loading d.c.z.zshrc .c/s/10+40+50+90+91"
     [[ -f "${HOME}/.config/shell/10-secrets.sh" ]] && source "${HOME}/.config/shell/10-secrets.sh"
     [[ -f "${HOME}/.config/shell/40-ls-colors.sh" ]] && source "${HOME}/.config/shell/40-ls-colors.sh"
     [[ -f "${HOME}/.config/shell/50-logic-functions-core.sh" ]] && source "${HOME}/.config/shell/50-logic-functions-core.sh"
+    [[ "${DOTFILES_FAST:-0}" == "1" ]] && [[ -f "${HOME}/.config/shell/90-ux-aliases.sh" ]] && source "${HOME}/.config/shell/90-ux-aliases.sh"
     [[ -f "${HOME}/.config/shell/91-ux-aliases-lazy.sh" ]] && source "${HOME}/.config/shell/91-ux-aliases-lazy.sh"
     DOTFILES_LAYERS_LOAD_STATE=stage1
   }
