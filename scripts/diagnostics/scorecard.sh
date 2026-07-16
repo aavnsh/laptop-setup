@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2015-2026 Sebastien Rousseau
+# Dotfiles Scorecard
+# Usage: dot scorecard [--json|-j]
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../lib/dot/ui.sh
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../../lib/dot/ui.sh"
+# shellcheck source=../../lib/dot/log.sh
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../../lib/dot/log.sh"
+export DOT_COMMAND="scorecard"
+
+ui_init
+set +x
+
+if ! command -v python3 >/dev/null 2>&1; then
+  ui_err "python3" "required for scorecard"
+  exit 1
+fi
+
+JSON_OUTPUT=false
+if [[ "${1:-}" == "--json" || "${1:-}" == "-j" ]]; then
+  JSON_OUTPUT=true
+fi
+
+extract_json() {
+  # strip any leading noise before the JSON payload
+  awk 'BEGIN{p=0} /^[[:space:]]*[{]/{p=1} p{print}'
+}
+
+health_json=$(env -u SHELLOPTS bash "$SCRIPT_DIR/health.sh" --json 2>/dev/null | extract_json)
+security_json=$(env -u SHELLOPTS bash "$SCRIPT_DIR/security-score.sh" --json 2>/dev/null | extract_json)
+perf_json=$(env -u SHELLOPTS bash "$SCRIPT_DIR/perf.sh" --json 2>/dev/null | extract_json)
+
+if [[ -z "$health_json" || -z "$security_json" || -z "$perf_json" ]]; then
+  ui_err "scorecard" "failed to collect JSON metrics"
+  exit 1
+fi
+
+health_score=$(python3 -c 'import json,sys; j=json.loads(sys.stdin.read()); print(j.get("score",0))' <<<"$health_json")
+health_warnings=$(python3 -c 'import json,sys; j=json.loads(sys.stdin.read()); print(j.get("warnings",0))' <<<"$health_json")
+health_failures=$(python3 -c 'import json,sys; j=json.loads(sys.stdin.read()); print(j.get("failures",0))' <<<"$health_json")
+security_score=$(python3 -c 'import json,sys; j=json.loads(sys.stdin.read()); print(j.get("score",0))' <<<"$security_json")
+perf_score=$(python3 -c 'import json,sys; j=json.loads(sys.stdin.read()); print(j.get("score",0))' <<<"$perf_json")
+perf_mean=$(python3 -c 'import json,sys; j=json.loads(sys.stdin.read()); print(j.get("mean_ms",0))' <<<"$perf_json")
+perf_target=$(python3 -c 'import json,sys; j=json.loads(sys.stdin.read()); print(j.get("target_ms",0))' <<<"$perf_json")
+
+# Drift count
+if command -v chezmoi >/dev/null 2>&1; then
+  drift_count=$(chezmoi status 2>/dev/null | wc -l | tr -d ' ')
+else
+  drift_count=0
+fi
+
+dot_log info "scorecard_complete" "health=$health_score" "security=$security_score" "perf=$perf_score"
+dot_metric "scorecard_health" "$health_score" "percent"
+dot_metric "scorecard_security" "$security_score" "percent"
+dot_metric "scorecard_perf" "$perf_score" "percent"
+
+if $JSON_OUTPUT; then
+  cat <<JSON
+{
+  "health": {"score": $health_score, "warnings": $health_warnings, "failures": $health_failures},
+  "security": {"score": $security_score},
+  "performance": {"score": $perf_score, "mean_ms": $perf_mean, "target_ms": $perf_target},
+  "drift": {"count": $drift_count}
+}
+JSON
+  exit 0
+fi
+
+ui_dot_banner "Diagnostics"
+ui_header "Dotfiles Scorecard"
+
+ui_section "Scores"
+ui_kv "Health" "${health_score}/100"
+ui_kv "Security" "${security_score}/100"
+ui_kv "Performance" "${perf_score}/100 (avg ${perf_mean}ms, target ${perf_target}ms)"
+ui_kv "Drift" "${drift_count} file(s)"
+
+if [[ "$security_score" -lt 100 ]]; then
+  ui_warn "Security" "Run 'dot security-score' to reach 100/100"
+else
+  ui_ok "Security" "100/100"
+fi
+
+if [[ "$perf_score" -lt 100 ]]; then
+  ui_warn "Performance" "Tune startup to reach 100/100"
+else
+  ui_ok "Performance" "100/100"
+fi
+
+if [[ "$health_failures" -gt 0 ]]; then
+  ui_err "Health" "Failures detected (run 'dot heal')"
+elif [[ "$health_warnings" -gt 0 ]]; then
+  ui_warn "Health" "Warnings detected (run 'dot heal')"
+else
+  ui_ok "Health" "All checks passing"
+fi
+
+ui_section "Tips"
+ui_info "Fix" "dot heal"
+ui_info "Profile" "dot perf --profile"
+ui_info "Security" "dot security-score"
+ui_info "Drift" "dot drift"
+
+exit_code=0
+if [[ "$security_score" -lt 100 ]]; then
+  exit_code=1
+fi
+if [[ "$perf_score" -lt 100 ]]; then
+  exit_code=1
+fi
+exit "$exit_code"

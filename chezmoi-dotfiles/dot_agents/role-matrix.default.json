@@ -1,0 +1,35 @@
+{
+  "roles": {
+    "orchestrator": {
+      "tiers": {
+        "default": { "agent": "claude-code", "model": "haiku", "vendor": "anthropic" }
+      }
+    },
+    "implementer": {
+      "tiers": {
+        "small": { "agent": "aider", "model": "ollama_chat/qwen3.5:9b", "vendor": "ollama-local" },
+        "default": { "agent": "aider", "model": "ollama_chat/qwen2.5-coder:32b-instruct-q4_K_M", "vendor": "ollama-local" }
+      }
+    },
+    "code_reviewer": {
+      "tiers": {
+        "default": { "agent": "claude-code", "model": "sonnet", "vendor": "anthropic" }
+      }
+    },
+    "spec_reviewer": {
+      "tiers": {
+        "default": {
+          "agent": "claude-code",
+          "model": "opus",
+          "vendor": "anthropic",
+          "cross_vendor_opt_in": { "agent": "gemini-cli", "model": "gemini", "vendor": "google" }
+        }
+      }
+    },
+    "security_reviewer": {
+      "tiers": {
+        "default": { "agent": "claude-code", "model": "fable", "vendor": "anthropic" }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+#!/bin/bash
+# Brewfile hash: {{ include "dot_Brewfile.tmpl" | sha256sum }}
+{{ if eq .chezmoi.os "darwin" -}}
+echo "🔄 Syncing Homebrew packages..."
+brew bundle --global
+{{ end -}}

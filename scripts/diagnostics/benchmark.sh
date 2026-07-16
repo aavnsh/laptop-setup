@@ -1,0 +1,382 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2015-2026 Sebastien Rousseau
+## Shell Performance Benchmark.
+##
+## Measures shell startup time with per-component profiling. Uses hyperfine
+## for statistical accuracy or falls back to basic timing. Tracks history
+## for regression detection.
+##
+## # Usage
+## dot benchmark                    # Basic startup timing
+## dot benchmark --detailed         # Per-component breakdown
+## dot benchmark --profile          # zprof analysis
+## dot benchmark --compare          # Compare with history
+## dot benchmark --waterfall        # ASCII waterfall chart of component timings
+##
+## # Dependencies
+## - python3: Millisecond timing (required)
+## - hyperfine: Statistical benchmarking (optional, falls back to basic)
+## - jq: JSON parsing for results (optional)
+## - zsh: Target shell (required)
+##
+## # Metrics
+## | Rating | Threshold | Description |
+## |--------|-----------|-------------|
+## | Excellent | <100ms | Instant response |
+## | Good | <200ms | Responsive |
+## | Acceptable | <500ms | Noticeable delay |
+## | Slow | >500ms | Optimization needed |
+##
+## # Platform Notes
+## - macOS: Full support
+## - Linux: Full support
+## - WSL: May show higher times due to filesystem overhead
+##
+## # Output Files
+## Benchmarks saved to ~/.local/share/dotfiles/benchmarks/
+##
+## # Idempotency
+## Safe to run repeatedly. Creates timestamped history files.
+
+set -euo pipefail
+
+_cleanup_files=()
+trap 'set +u; rm -f "${_cleanup_files[@]}" 2>/dev/null; set -u' EXIT
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../lib/dot/ui.sh
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../../lib/dot/ui.sh"
+# shellcheck source=../../lib/dot/log.sh
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../../lib/dot/log.sh"
+export DOT_COMMAND="benchmark"
+
+BENCHMARK_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/benchmarks"
+mkdir -p "$BENCHMARK_DIR"
+
+# Parse arguments
+DETAILED=false
+PROFILE=false
+COMPARE=false
+WATERFALL=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --detailed | -d)
+      DETAILED=true
+      shift
+      ;;
+    --profile | -p)
+      PROFILE=true
+      shift
+      ;;
+    --compare | -c)
+      COMPARE=true
+      shift
+      ;;
+    --waterfall | -w)
+      WATERFALL=true
+      shift
+      ;;
+    *) shift ;;
+  esac
+done
+
+ui_init
+
+print_header() {
+  echo ""
+  ui_dot_banner "Diagnostics"
+  ui_header "Shell Performance Benchmark"
+  echo ""
+}
+
+# Basic timing function
+time_command() {
+  local start end
+  start=$(python3 -c 'import time; print(int(time.time() * 1000))')
+  eval "$1" >/dev/null 2>&1
+  end=$(python3 -c 'import time; print(int(time.time() * 1000))')
+  echo $((end - start))
+}
+
+# Per-component profiling using zprof
+run_zsh_profile() {
+  ui_header "Zsh profiler (zprof)"
+  echo ""
+
+  zsh -c '
+    zmodload zsh/zprof
+# shellcheck disable=SC1091
+    source ~/.zshenv 2>/dev/null
+# shellcheck disable=SC1091
+    source ~/.config/zsh/.zshrc 2>/dev/null
+    zprof
+  ' 2>/dev/null | head -30
+}
+
+# Benchmark individual components
+benchmark_components() {
+  ui_header "Per-Component Timing"
+  echo ""
+  printf "%-35s %8s\n" "Component" "Time (ms)"
+  echo "───────────────────────────────────────────────"
+
+  # zshenv (bootloader)
+  local zshenv_time
+  # shellcheck disable=SC1091
+  zshenv_time=$(time_command "zsh -c 'source ~/.zshenv 2>/dev/null; exit'")
+  printf "%-35s %8s\n" "zshenv (bootloader)" "${zshenv_time}ms"
+
+  # Core shell options
+  local options_time
+  # shellcheck disable=SC1091
+  options_time=$(time_command "zsh -c 'source ~/.config/zsh/rc.d/30-options.zsh 2>/dev/null; exit'" 2>/dev/null || echo "N/A")
+  printf "%-35s %8s\n" "rc.d/30-options.zsh" "${options_time}ms"
+
+  # Zinit plugins
+  local zinit_time
+  # shellcheck disable=SC1091
+  zinit_time=$(time_command "zsh -c 'source ~/.config/zsh/rc.d/20-zinit.zsh 2>/dev/null; exit'" 2>/dev/null || echo "N/A")
+  printf "%-35s %8s\n" "rc.d/20-zinit.zsh (plugins)" "${zinit_time}ms"
+
+  # Tool initializations
+  for tool in starship atuin zoxide fzf direnv; do
+    if command -v "$tool" >/dev/null 2>&1; then
+      local tool_time
+      case "$tool" in
+        starship) tool_time=$(time_command "starship init zsh >/dev/null") ;;
+        atuin) tool_time=$(time_command "atuin init zsh >/dev/null") ;;
+        zoxide) tool_time=$(time_command "zoxide init zsh >/dev/null") ;;
+        fzf) tool_time=$(time_command "true") ;; # FZF sourced from file
+        direnv) tool_time=$(time_command "direnv hook zsh >/dev/null") ;;
+      esac
+      printf "%-35s %8s\n" "$tool init" "${tool_time}ms"
+    fi
+  done
+
+  echo "───────────────────────────────────────────────"
+}
+
+# Render ASCII waterfall chart from component timings
+render_waterfall() {
+  ui_header "Startup Waterfall"
+  echo ""
+
+  local -a names=()
+  local -a times=()
+  local total_time=0
+
+  # zshenv
+  local t
+  # shellcheck disable=SC1091
+  t=$(time_command "zsh -c 'source ~/.zshenv 2>/dev/null; exit'")
+  names+=("zshenv (bootloader)")
+  times+=("$t")
+  total_time=$((total_time + t))
+
+  # rc.d modules
+  # shellcheck disable=SC1091
+  t=$(time_command "zsh -c 'source ~/.config/zsh/rc.d/30-options.zsh 2>/dev/null; exit'" 2>/dev/null || echo 0)
+  names+=("rc.d/30-options.zsh")
+  times+=("$t")
+  total_time=$((total_time + t))
+
+  # shellcheck disable=SC1091
+  t=$(time_command "zsh -c 'source ~/.config/zsh/rc.d/20-zinit.zsh 2>/dev/null; exit'" 2>/dev/null || echo 0)
+  names+=("rc.d/20-zinit (plugins)")
+  times+=("$t")
+  total_time=$((total_time + t))
+
+  # Tool inits
+  for tool in starship atuin zoxide fzf direnv; do
+    if command -v "$tool" >/dev/null 2>&1; then
+      case "$tool" in
+        starship) t=$(time_command "starship init zsh >/dev/null") ;;
+        atuin) t=$(time_command "atuin init zsh >/dev/null") ;;
+        zoxide) t=$(time_command "zoxide init zsh >/dev/null") ;;
+        fzf) t=$(time_command "true") ;;
+        direnv) t=$(time_command "direnv hook zsh >/dev/null") ;;
+      esac
+      names+=("$tool init")
+      times+=("$t")
+      total_time=$((total_time + t))
+    fi
+  done
+
+  if [[ "$total_time" -eq 0 ]]; then
+    ui_warn "No timing data" "Could not measure components"
+    return
+  fi
+
+  # Render bars
+  local bar_width=30
+  local i
+  for i in "${!names[@]}"; do
+    local name="${names[$i]}"
+    local ms="${times[$i]}"
+    local pct=$((ms * 100 / total_time))
+    local filled=$((ms * bar_width / total_time))
+    local empty=$((bar_width - filled))
+
+    local bar=""
+    local j
+    for ((j = 0; j < filled; j++)); do bar+="$_GL_BAR_FILL"; done
+    for ((j = 0; j < empty; j++)); do bar+="$_GL_BAR_EMPTY"; done
+
+    if [[ "$UI_COLOR" = "1" ]]; then
+      printf "  %-22s %s%s%s%s%s  %4dms (%2d%%)\n" \
+        "$name" "$GREEN" "${bar:0:$filled}" "$NORMAL$GRAY" "${bar:$filled}" "$NORMAL" "$ms" "$pct"
+    else
+      printf "  %-22s %s  %4dms (%2d%%)\n" "$name" "$bar" "$ms" "$pct"
+    fi
+  done
+
+  echo "  ──────────────────────────────────────────────────────────"
+  printf "  %-22s %*s  %4dms\n" "Total" "$bar_width" "" "$total_time"
+  echo ""
+}
+
+# Run hyperfine benchmark
+run_hyperfine() {
+  if ! command -v hyperfine >/dev/null 2>&1; then
+    if [[ "$UI_ENABLED" = "1" ]]; then
+      ui_warn "hyperfine" "not installed, using basic timing"
+    else
+      printf '%b\n' "${YELLOW}hyperfine not installed. Using basic timing.${NC}"
+    fi
+    local times=()
+    for _ in {1..5}; do
+      times+=("$(time_command "zsh -i -c exit")")
+    done
+    local sum=0
+    for t in "${times[@]}"; do sum=$((sum + t)); done
+    if [[ "$UI_ENABLED" = "1" ]]; then
+      ui_ok "Average startup time" "$((sum / 5))ms"
+    else
+      printf '%b\n' "\n${GREEN}Average startup time: $((sum / 5))ms${NC}"
+    fi
+    return
+  fi
+
+  echo ""
+  ui_header "Running hyperfine benchmark"
+  echo ""
+  hyperfine --warmup 3 --runs 10 --shell=none \
+    --export-json "$BENCHMARK_DIR/latest.json" \
+    'zsh -i -c exit'
+
+  # Extract and display results
+  if [[ -f "$BENCHMARK_DIR/latest.json" ]]; then
+    local mean_ms
+    mean_ms=$(jq '.results[0].mean * 1000 | floor' "$BENCHMARK_DIR/latest.json")
+    local min_ms
+    min_ms=$(jq '.results[0].min * 1000 | floor' "$BENCHMARK_DIR/latest.json")
+    local max_ms
+    max_ms=$(jq '.results[0].max * 1000 | floor' "$BENCHMARK_DIR/latest.json")
+
+    echo ""
+    ui_header "Results"
+    if [[ "$UI_ENABLED" = "1" ]]; then
+      ui_kv "Mean:" "${mean_ms}ms"
+      ui_kv "Min:" "${min_ms}ms"
+      ui_kv "Max:" "${max_ms}ms"
+    else
+      echo "  Mean: ${mean_ms}ms"
+      echo "  Min:  ${min_ms}ms"
+      echo "  Max:  ${max_ms}ms"
+    fi
+
+    # Performance rating
+    if [[ $mean_ms -lt 100 ]]; then
+      if [[ "$UI_ENABLED" = "1" ]]; then
+        ui_ok "Performance" "Excellent (<100ms)"
+      else
+        printf '%b\n' "\n${GREEN}⚡ Excellent (<100ms)${NC}"
+      fi
+    elif [[ $mean_ms -lt 200 ]]; then
+      if [[ "$UI_ENABLED" = "1" ]]; then
+        ui_ok "Performance" "Good (<200ms)"
+      else
+        printf '%b\n' "\n${GREEN}✓ Good (<200ms)${NC}"
+      fi
+    elif [[ $mean_ms -lt 500 ]]; then
+      if [[ "$UI_ENABLED" = "1" ]]; then
+        ui_warn "Performance" "Acceptable (<500ms)"
+      else
+        printf '%b\n' "\n${YELLOW}⚠ Acceptable (<500ms)${NC}"
+      fi
+    else
+      if [[ "$UI_ENABLED" = "1" ]]; then
+        ui_err "Performance" "Slow (>500ms)"
+      else
+        printf '%b\n' "\n${RED}✗ Slow (>500ms) - optimization needed${NC}"
+      fi
+    fi
+
+    # Save with timestamp for history
+    cp "$BENCHMARK_DIR/latest.json" "$BENCHMARK_DIR/$(date +%Y%m%d_%H%M%S).json"
+    dot_log info "benchmark_complete" "mean_ms=$mean_ms" "min_ms=$min_ms" "max_ms=$max_ms"
+    dot_metric "shell_startup_mean" "$mean_ms" "ms"
+  fi
+}
+
+# Compare with previous benchmarks
+compare_benchmarks() {
+  ui_header "Benchmark History"
+  echo ""
+
+  local files
+  files=$(find "$BENCHMARK_DIR" -name "*.json" -type f | sort -r | head -10)
+
+  if [[ -z "$files" ]]; then
+    echo "No benchmark history found."
+    return
+  fi
+
+  printf "%-20s %10s %10s %10s\n" "Date" "Mean" "Min" "Max"
+  echo "────────────────────────────────────────────────"
+
+  for f in $files; do
+    local basename
+    basename=$(basename "$f" .json)
+    if [[ "$basename" == "latest" ]]; then continue; fi
+
+    local mean min max
+    mean=$(jq '.results[0].mean * 1000 | floor' "$f" 2>/dev/null || echo "N/A")
+    min=$(jq '.results[0].min * 1000 | floor' "$f" 2>/dev/null || echo "N/A")
+    max=$(jq '.results[0].max * 1000 | floor' "$f" 2>/dev/null || echo "N/A")
+
+    printf "%-20s %10sms %10sms %10sms\n" "$basename" "$mean" "$min" "$max"
+  done
+}
+
+# Main execution
+print_header
+
+if $PROFILE; then
+  run_zsh_profile
+elif $COMPARE; then
+  compare_benchmarks
+elif $WATERFALL; then
+  render_waterfall
+elif $DETAILED; then
+  benchmark_components
+  echo ""
+  run_hyperfine
+else
+  run_hyperfine
+fi
+
+if [[ "$UI_ENABLED" = "1" ]]; then
+  echo ""
+  ui_info "Tip" "dot benchmark --detailed"
+  ui_info "Tip" "dot benchmark --profile"
+  ui_info "Tip" "dot benchmark --waterfall"
+else
+  printf '%b\n' "\n${CYAN}Tip: Run 'dot benchmark --detailed' for per-component timing${NC}"
+  printf '%b\n' "${CYAN}     Run 'dot benchmark --profile' for zprof analysis${NC}"
+  printf '%b\n' "${CYAN}     Run 'dot benchmark --waterfall' for ASCII waterfall chart${NC}"
+fi
+printf '%b\n' "${CYAN}     Run 'dot benchmark --compare' for history${NC}\n"

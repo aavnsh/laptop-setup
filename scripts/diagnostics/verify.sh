@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2015-2026 Sebastien Rousseau
+# Dotfiles post-merge verification checks
+# Runs doctor + status + diff checks and exits non-zero on issues.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../lib/dot/ui.sh
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../../lib/dot/ui.sh"
+
+ui_init
+ui_dot_banner "Diagnostics"
+ui_header "Dotfiles Verify"
+echo ""
+
+failures=0
+dot_bin=""
+RUN_SECURITY=0
+
+# Parse arguments
+for arg in "$@"; do
+  case "$arg" in
+    --security | -s) RUN_SECURITY=1 ;;
+  esac
+done
+
+resolve_dot_bin() {
+  if command -v dot >/dev/null 2>&1; then
+    command -v dot
+    return
+  fi
+  if [[ -x "$HOME/.local/bin/dot" ]]; then
+    printf "%s\n" "$HOME/.local/bin/dot"
+    return
+  fi
+  local src_dir=""
+  if [[ -n "${CHEZMOI_SOURCE_DIR:-}" && -d "${CHEZMOI_SOURCE_DIR}" ]]; then
+    src_dir="${CHEZMOI_SOURCE_DIR}"
+  elif [[ -d "$HOME/.dotfiles" ]]; then
+    src_dir="$HOME/.dotfiles"
+  elif [[ -d "$HOME/.local/share/chezmoi" ]]; then
+    src_dir="$HOME/.local/share/chezmoi"
+  fi
+  if [[ -n "$src_dir" && -x "$src_dir/bin/dot" ]]; then
+    printf "%s\n" "$src_dir/bin/dot"
+    return
+  fi
+  return 1
+}
+
+run_step() {
+  local label="$1"
+  shift
+
+  ui_info "Running" "$label"
+  set +e
+  "$@"
+  local ec=$?
+  set -e
+
+  if [[ $ec -eq 0 ]]; then
+    ui_ok "$label" "ok"
+  else
+    ui_err "$label" "failed (exit $ec)"
+    failures=$((failures + 1))
+  fi
+}
+
+if dot_bin="$(resolve_dot_bin)"; then
+  if [[ $RUN_SECURITY -eq 1 ]]; then
+    run_step "security-score" "$dot_bin" security-score
+  else
+    run_step "dot doctor" "$dot_bin" doctor
+    run_step "dot status" "$dot_bin" status
+  fi
+else
+  # shellcheck disable=SC1091
+  ui_err "dot binary" "not found in PATH, ~/.local/bin, or source tree"
+  failures=$((failures + 1))
+fi
+
+ui_info "Running" "chezmoi diff"
+set +e
+diff_output="$(chezmoi diff 2>&1)"
+diff_ec=$?
+set -e
+if [[ $diff_ec -eq 0 ]]; then
+  ui_ok "chezmoi diff" "clean"
+else
+  ui_warn "chezmoi diff" "drift detected"
+  if [[ -n "$diff_output" ]]; then
+    printf "%s\n" "$diff_output"
+  fi
+  failures=$((failures + 1))
+fi
+
+echo ""
+if [[ $failures -eq 0 ]]; then
+  ui_ok "Verification" "all checks passed"
+  exit 0
+fi
+
+ui_err "Verification" "$failures check(s) failed"
+ui_info "Hint" "Run 'dot heal' then re-run 'dot verify'"
+exit 1

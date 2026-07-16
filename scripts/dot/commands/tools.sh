@@ -1,0 +1,537 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2015-2026 Sebastien Rousseau
+# Dotfiles CLI - Tools Commands
+# tools, new, packages, log-rotate, aliases, alias-check, env, profile
+
+set -euo pipefail
+
+_TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../../lib/dot/utils.sh
+source "$_TOOLS_DIR/../../../lib/dot/utils.sh"
+# shellcheck source=aliases.sh
+source "$_TOOLS_DIR/aliases.sh"
+
+# Cross-platform sed in-place (BSD vs GNU)
+sed_in_place() {
+  if sed --version >/dev/null 2>&1; then
+    sed -i "$@" # GNU
+  else
+    sed -i '' "$@" # BSD (macOS)
+  fi
+}
+
+dot_ui_command_banner "Tools" "${1:-}"
+
+ensure_line_in_file() {
+  local file="$1"
+  local line="$2"
+  if ! grep -Fqx "$line" "$file" 2>/dev/null; then
+    printf "%s\n" "$line" >>"$file"
+  fi
+}
+
+apply_template_security_baseline() {
+  local dest="$1"
+  local template_lang="$2"
+
+  # Baseline repo hygiene defaults
+  if [[ ! -f "$dest/.editorconfig" ]]; then
+    cat >"$dest/.editorconfig" <<'EOF'
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+EOF
+  fi
+
+  if [[ ! -f "$dest/.gitattributes" ]]; then
+    cat >"$dest/.gitattributes" <<'EOF'
+* text=auto eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+EOF
+  fi
+
+  if [[ ! -f "$dest/.gitignore" ]]; then
+    : >"$dest/.gitignore"
+  fi
+  ensure_line_in_file "$dest/.gitignore" ".env"
+  ensure_line_in_file "$dest/.gitignore" ".env.*"
+  ensure_line_in_file "$dest/.gitignore" "*.pem"
+  ensure_line_in_file "$dest/.gitignore" "*.key"
+  ensure_line_in_file "$dest/.gitignore" "*.p12"
+  ensure_line_in_file "$dest/.gitignore" "*.agekey"
+
+  if [[ ! -f "$dest/SECURITY.md" ]]; then
+    cat >"$dest/SECURITY.md" <<'EOF'
+# Security Policy
+
+## Reporting
+
+Do not disclose vulnerabilities publicly before a fix is available.
+Open a private security advisory or contact maintainers directly.
+
+## Baseline Controls
+
+- No secrets in source control.
+- Use environment variables for API keys/tokens.
+- Keep dependencies and lockfiles up to date.
+- Enable secret scanning in CI.
+EOF
+  fi
+
+  mkdir -p "$dest/.github/workflows"
+  if [[ ! -f "$dest/.github/workflows/security.yml" ]]; then
+    cat >"$dest/.github/workflows/security.yml" <<'EOF'
+name: Security Baseline
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: trufflesecurity/trufflehog@6961f2bace57ab32b23b3ba40f8f420f6bc7e004 # v3.93.3
+        with:
+          extra_args: --only-verified
+EOF
+  fi
+
+  # Best-effort lockfile generation to improve reproducibility.
+  case "$template_lang" in
+    node)
+      if has_command npm && [[ -f "$dest/package.json" ]] && [[ ! -f "$dest/package-lock.json" ]]; then
+        (cd "$dest" && npm install --package-lock-only --ignore-scripts --silent >/dev/null 2>&1) || true
+      fi
+      ;;
+    python)
+      if has_command uv && [[ -f "$dest/pyproject.toml" ]] && [[ ! -f "$dest/uv.lock" ]]; then
+        (cd "$dest" && uv lock >/dev/null 2>&1) || true
+      fi
+      ;;
+    go)
+      if has_command go && [[ -f "$dest/go.mod" ]]; then
+        (cd "$dest" && go mod tidy >/dev/null 2>&1) || true
+      fi
+      ;;
+  esac
+}
+
+show_system_package_managers() {
+  if has_command brew; then
+    local brew_version brew_formulae brew_casks
+    brew_version=$(brew --version | head -1)
+    brew_formulae=$(brew list --formula 2>/dev/null | wc -l | tr -d ' ')
+    brew_casks=$(brew list --cask 2>/dev/null | wc -l | tr -d ' ')
+    echo "  Homebrew: $brew_version"
+    echo "    Formulae: $brew_formulae"
+    echo "    Casks: $brew_casks"
+  fi
+  if has_command apt; then
+    local apt_version apt_packages
+    apt_version=$(apt --version 2>/dev/null | head -1 || echo 'installed')
+    apt_packages=$(dpkg -l 2>/dev/null | grep -c '^ii' || echo 'N/A')
+    echo "  APT: $apt_version"
+    echo "    Packages: $apt_packages"
+  fi
+  if has_command dnf; then
+    echo "  DNF: $(dnf --version 2>/dev/null | head -1 || echo 'installed')"
+  fi
+  if has_command pacman; then
+    local pacman_packages
+    pacman_packages=$(pacman -Q 2>/dev/null | wc -l | tr -d ' ')
+    echo "  Pacman: $(pacman --version | head -1)"
+    echo "    Packages: $pacman_packages"
+  fi
+  if has_command nix; then
+    echo "  Nix: $(nix --version)"
+  fi
+}
+
+show_language_package_managers() {
+  if has_command npm; then
+    local npm_globals
+    npm_globals=$(npm list -g --depth=0 2>/dev/null | grep -c '├──\|└──' || echo 'N/A')
+    echo "  npm: $(npm --version)"
+    echo "    Global packages: $npm_globals"
+  fi
+  if has_command pnpm; then
+    echo "  pnpm: $(pnpm --version)"
+  fi
+  if has_command bun; then
+    echo "  Bun: $(bun --version)"
+  fi
+  if has_command cargo; then
+    local cargo_installed
+    cargo_installed=$(cargo install --list 2>/dev/null | grep -c ':$' || echo 'N/A')
+    echo "  Cargo: $(cargo --version | cut -d' ' -f2)"
+    echo "    Installed: $cargo_installed"
+  fi
+  if has_command pip3; then
+    echo "  pip: $(pip3 --version | cut -d' ' -f2)"
+  fi
+  if has_command pipx; then
+    local pipx_installed pipx_list_out
+    # `pipx list --short` returns non-zero when any installed package
+    # has a broken interpreter (common). Under `set -euo pipefail` a
+    # naive `local x=$(pipx …)` cascades and kills `dot packages`
+    # mid-output. Capture the pipeline separately so we can fall back
+    # cleanly without stray "N/A" lines from pipe-with-|| tricks.
+    if pipx_list_out="$(pipx list --short 2>/dev/null)"; then
+      pipx_installed="$(printf '%s' "$pipx_list_out" | wc -l | tr -d ' ')"
+    else
+      pipx_installed="N/A"
+    fi
+    echo "  pipx: $(pipx --version)"
+    echo "    Installed: $pipx_installed"
+  fi
+  if has_command gem; then
+    echo "  RubyGems: $(gem --version)"
+  fi
+  if has_command go; then
+    echo "  Go: $(go version | cut -d' ' -f3)"
+  fi
+}
+
+cmd_setup() {
+  run_script "scripts/ops/setup.sh" "Setup script" "$@"
+}
+
+cmd_tools() {
+  local src_dir subcommand
+  src_dir="$(resolve_source_dir)"
+  subcommand="${1:-}"
+
+  if [ "$subcommand" = "install" ]; then
+    if ! has_command nix; then
+      ui_err "Nix" "not installed"
+      echo ""
+      ui_header "Install Nix"
+      echo "  Follow the verified installer instructions:"
+      echo "  https://nixos.org/download/"
+      echo ""
+      ui_info "Or" "use Homebrew/apt for individual tools"
+      exit 1
+    fi
+    shift
+    # Validate any tool name arguments
+    for arg in "$@"; do
+      [[ "$arg" == -* ]] && continue
+      validate_name "$arg" "tool name"
+    done
+    if [ -n "$src_dir" ] && [ -f "$src_dir/nix/flake.nix" ]; then
+      ui_info "Entering" "Nix development shell"
+      exec nix develop "$src_dir/nix" "$@"
+    else
+      ui_err "Nix flake" "not found in source directory"
+      exit 1
+    fi
+  elif [ "$subcommand" = "docs" ]; then
+    if [ -n "$src_dir" ] && [ -f "$src_dir/docs/TOOLS.md" ]; then
+      exec cat "$src_dir/docs/TOOLS.md"
+    elif [ -n "$src_dir" ] && [ -f "$src_dir/docs/UTILS.md" ]; then
+      exec cat "$src_dir/docs/UTILS.md"
+    fi
+    ui_err "Docs" "TOOLS.md not found"
+    exit 1
+  else
+    ui_header "Dot Tools"
+    echo ""
+    ui_info "Usage" "dot tools [command]"
+    echo ""
+    ui_header "Commands"
+    ui_ok "(none)" "Show tools documentation"
+    ui_ok "install" "Enter Nix development shell with all tools"
+    ui_ok "docs" "Show full tools markdown documentation"
+    echo ""
+    ui_header "Quick Reference"
+    ui_ok "dot sync" "Apply dotfiles"
+    ui_ok "dot update" "Pull latest changes and apply"
+    ui_ok "dot doctor" "Run health checks"
+    ui_ok "dot verify" "Run post-merge verification checks"
+    ui_ok "dot keys" "Show keybindings catalog"
+    ui_ok "dot learn" "Interactive tour"
+  fi
+}
+
+cmd_new() {
+  local template_lang="${1:-}"
+  local project_name="${2:-}"
+
+  if [ -z "$template_lang" ] || [ -z "$project_name" ]; then
+    echo "Usage: dot new <lang> <name>"
+    echo "Available templates: python, go, node, packer, molecule"
+    exit 1
+  fi
+
+  # Validate inputs to prevent path traversal
+  if [[ ! "$template_lang" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    die "Invalid template name: $template_lang"
+  fi
+  if [[ ! "$project_name" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
+    die "Invalid project name: $project_name"
+  fi
+
+  local src_dir
+  src_dir="$(require_source_dir)"
+  local template_dir="$src_dir/templates/projects/$template_lang"
+
+  if [ ! -d "$template_dir" ]; then
+    echo "Unknown template: $template_lang"
+    echo "Available templates: python, go, node, packer, molecule"
+    exit 1
+  fi
+
+  # Pre-flight: verify Python is available before creating any files
+  local python_cmd=""
+  if has_command python3; then
+    python_cmd="python3"
+  elif has_command python; then
+    python_cmd="python"
+  else
+    die "python3 is required to render templates."
+  fi
+
+  local dest="$PWD/$project_name"
+  if [ -e "$dest" ]; then
+    die "Destination exists: $dest"
+  fi
+
+  mkdir -p "$dest"
+  cp -R "$template_dir/." "$dest"
+
+  # Rename directories
+  find "$dest" -depth -name "__PROJECT_NAME__" -print0 | while IFS= read -r -d '' path; do
+    local parent
+    parent="$(dirname "$path")"
+    mv "$path" "$parent/$project_name"
+  done
+
+  # Render template placeholders
+  find "$dest" -type f -print0 | while IFS= read -r -d '' file; do
+    $python_cmd - "$file" "$project_name" <<'PY'
+import sys
+path = sys.argv[1]
+name = sys.argv[2]
+with open(path, "r", encoding="utf-8") as f:
+    data = f.read()
+data = data.replace("__PROJECT_NAME__", name)
+with open(path, "w", encoding="utf-8") as f:
+    f.write(data)
+PY
+  done
+
+  apply_template_security_baseline "$dest" "$template_lang"
+
+  echo "Created $template_lang project at $dest"
+}
+
+cmd_packages() {
+  ui_header "Package Managers"
+  echo ""
+  show_system_package_managers
+  echo ""
+  ui_header "Language Package Managers"
+  show_language_package_managers
+}
+
+cmd_log_rotate() {
+  run_script "scripts/tools/log-rotate.sh" "Log rotation script" "$@"
+}
+
+cmd_env_mise() {
+  # `dot env emit` is a separate sub-handler — it doesn't need mise
+  # at command-time, only when actually invoked (the script checks).
+  if [[ "${1:-}" == "emit" ]]; then
+    shift
+    # shellcheck source=./env-emit.sh
+    source "$(require_source_dir)/scripts/dot/commands/env-emit.sh"
+    dot_env_emit "$@"
+    return $?
+  fi
+
+  if ! has_command mise; then
+    ui_err "mise not installed (required for dot env)"
+    exit 1
+  fi
+  case "${1:-list}" in
+    list | ls)
+      if has_command jq; then
+        ui_table_begin "Tool" "Version" "Source" "Requested"
+        while IFS=$'\t' read -r tool ver source req; do
+          ui_table_add "$tool" "$ver" "${source/$HOME/\~}" "$req"
+        done < <(mise ls --json 2>/dev/null | jq -r '
+          to_entries[] as $t
+          | $t.value[]
+          | [
+              $t.key,
+              (.version // "-"),
+              (.source.path // ""),
+              (.requested_version // "")
+            ]
+          | @tsv
+        ')
+        ui_table_end
+      else
+        mise ls
+      fi
+      # Surface orphan installs (tool versions on disk that no active config
+      # claims). `--dry-run-code` exits 1 iff there is something to prune;
+      # the call is fast (no I/O beyond reading the tracked-configs index).
+      if mise prune --dry-run-code --quiet >/dev/null 2>&1; then
+        :
+      else
+        echo ""
+        ui_warn "orphan installs" "tool versions on disk are not requested by any config"
+        ui_info "to clean" "run 'dot env prune' (dry-run) or 'dot env prune --yes' to commit"
+      fi
+      ;;
+    prune)
+      shift
+      local commit=0
+      for arg in "$@"; do
+        case "$arg" in
+          --yes | -y) commit=1 ;;
+        esac
+      done
+      if ((commit)); then
+        mise prune
+      else
+        ui_info "dry-run" "showing what 'mise prune' would remove (pass --yes to commit)"
+        echo ""
+        mise prune --dry-run
+        echo ""
+        ui_info "next" "re-run with 'dot env prune --yes' to actually uninstall"
+      fi
+      ;;
+    install)
+      shift
+      # Validate tool names to prevent injection
+      for arg in "$@"; do
+        [[ "$arg" == -* ]] && continue
+        validate_name "$arg" "tool name"
+      done
+      mise install "$@"
+      ;;
+    use)
+      shift
+      for arg in "$@"; do
+        [[ "$arg" == -* ]] && continue
+        validate_name "$arg" "tool name"
+      done
+      mise use "$@"
+      ;;
+    *) mise "$@" ;;
+  esac
+}
+
+cmd_profile() {
+  local data_file
+  data_file="$(resolve_chezmoi_source_dir)/.chezmoidata.toml"
+  if [[ ! -f "$data_file" ]]; then
+    die ".chezmoidata.toml not found"
+  fi
+  case "${1:-show}" in
+    show)
+      ui_header "Dotfiles Profile"
+      local profile_val
+      profile_val="$(grep '^profile' "$data_file" | head -1 | sed 's/.*=\s*"\(.*\)"/\1/')"
+      ui_info "Profile" "${profile_val:-default}"
+      echo ""
+      ui_section "Feature Flags"
+      grep -A 100 '^\[features\]' "$data_file" | tail -n +2 | while IFS= read -r line; do
+        [[ "$line" =~ ^\[ ]] && break
+        [[ -z "$line" || "$line" =~ ^# ]] && continue
+        local key val
+        key="${line%%=*}"
+        key="${key// /}"
+        val="${line#*=}"
+        val="${val// /}"
+        val="${val//\"/}"
+        ui_info "$key" "$val"
+      done
+      ;;
+    set)
+      shift
+      local new_profile="${1:-}"
+      if [[ -z "$new_profile" ]]; then
+        die "Usage: dot profile set <name>"
+      fi
+      if grep -q '^profile' "$data_file"; then
+        sed_in_place "s/^profile = \".*\"/profile = \"$new_profile\"/" "$data_file"
+      else
+        sed_in_place "1a profile = \"$new_profile\"" "$data_file"
+      fi
+      ui_info "Profile" "Set to '$new_profile'. Run 'dot sync' to apply."
+      ;;
+    *)
+      die "Unknown profile subcommand: ${1:-}. Use 'show' or 'set'."
+      ;;
+  esac
+}
+
+# Dispatch — aliases and alias-check are defined in aliases.sh (sourced above)
+case "${1:-}" in
+  tools)
+    shift
+    cmd_tools "$@"
+    ;;
+  alias-check)
+    shift
+    cmd_alias_check "$@"
+    ;;
+  new)
+    shift
+    cmd_new "$@"
+    ;;
+  packages)
+    shift
+    cmd_packages "$@"
+    ;;
+  log-rotate)
+    shift
+    cmd_log_rotate "$@"
+    ;;
+  setup)
+    shift
+    cmd_setup "$@"
+    ;;
+  aliases)
+    shift
+    cmd_aliases "$@"
+    ;;
+  env)
+    shift
+    cmd_env_mise "$@"
+    ;;
+  profile)
+    shift
+    cmd_profile "$@"
+    ;;
+  lint)
+    shift
+    exec bash "$(require_source_dir)/scripts/dot/commands/lint.sh" lint "$@"
+    ;;
+  *)
+    echo "Unknown tools command: ${1:-}" >&2
+    exit 1
+    ;;
+esac

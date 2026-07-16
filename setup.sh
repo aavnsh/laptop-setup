@@ -111,106 +111,30 @@ print_success() {
   printf "\e[0;32m  [✔] $1\e[0m\n"
 }
 
-cd $HOME/dotfiles
-
-source "install/configs.sh"
 
 # Get current dir (so run this script from anywhere)
 FILE_WORKING_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export FILE_WORKING_DIR
 
-# Create dotfiles_old in homedir
-print_info "Creating $dir_backup for backup of any existing dotfiles in ~..."
-mkd $dir_backup
-print_info "done"
+# print_info "Brew Installs"
+# cd $FILE_WORKING_DIR/brew/ && brew bundle install && cd $FILE_WORKING_DIR
+# print_success "brew done"
 
 
-print_info "Moving any existing dotfiles from ~ to $dir_backup"
-for i in ${FILES_TO_SYMLINK[@]}; do
-  mv ~/.${i##*/} ~/dotfiles_old/
-done
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-main() {
-
-  local i=''
-  local sourceFile=''
-  local targetFile=''
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  for i in ${FILES_TO_SYMLINK[@]}; do
-
-    sourceFile="$FILE_WORKING_DIR/$i"
-    targetFile="$HOME/.$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
-
-    execute "chmod -w $sourceFile"
-    if [ ! -e "$targetFile" ]; then 
-      execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
-    elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
-      print_success "$targetFile → $sourceFile"
-    else
-      ask_for_confirmation "'$targetFile' already exists, do you want to overwrite it?"
-      if answer_is_yes; then
-        rm -rf "$targetFile"
-        execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
-      else
-        print_error "$targetFile → $sourceFile"
-      fi
-    fi
-
-  done
-
-  #Symlink and Grant Execute Perms on Scripts
-  #mkd "$HOME/.bin"
-  #chmod +x $dir/scripts/batcharge.py
-  #ln -fs $dir/scripts/batcharge.py $HOME/.bin/batcharge.py
-
-  # Symlink online-check.sh
-  #chmod +x $dir/scripts/online-check.sh
-  #ln -fs $dir/scripts/online-check.sh $HOME/.bin/online-check.sh
-
-  # Write out current crontab
-  #crontab -l > /tmp/mycron
-  # Echo new cron into cron file
-  
-  #echo "* * * * * $HOME/.bin/online-check.sh" >> /tmp/mycron
-  # Install new cron file
-  #crontab /tmp/mycron
-  #rm /tmp/mycron
-
-}
-
-main
+print_info "Starting chezmoi setup"
+# https://www.chezmoi.io/user-guide/command-overview/
+if [ -d "$HOME/.local/share/chezmoi" ]; then
+    rm -rf "$HOME/.local/share/chezmoi"
+    chezmoi purge
+    print_success "Old chezmoi install purged"
+    print_info "New chezmoi setup install will be in current directory"
+fi
+# chezmoi --source $FILE_WORKING_DIR init git@github.com:aavnsh/laptop-setup.git
+# ls~/
+# mkdir -p ~/.config/chezmoi && echo "sourceDir = \"$FILE_WORKING_DIR\"" > ~/.config/chezmoi/chezmoi.toml
+chezmoi init --source="$FILE_WORKING_DIR"
+chezmoi apply --source="$FILE_WORKING_DIR"
+print_success "chezmoi done"
 
 
-# Install the Solarized Dark theme for iTerm
-#open "${HOME}/dotfiles/iterm/themes/Solarized Dark.itermcolors"
-
-# Don’t display the annoying prompt when quitting iTerm
-#defaults write com.googlecode.iterm2 PromptOnQuit -bool false
-
-
-###############################################################################
-# Git                                                                         #
-###############################################################################
-
-# github.com/jamiew/git-friendly
-# the `push` command which copies the github compare URL to my clipboard is heaven
-#bash < <( curl https://raw.github.com/jamiew/git-friendly/master/install.sh)
-
-
-###############################################################################
-# OSX defaults                                                                #
-# https://github.com/hjuutilainen/dotfiles/blob/master/bin/osx-user-defaults.sh
-###############################################################################
-
-sh osx/set-defaults.sh
-
-###############################################################################
-# Install Packages                                          #
-###############################################################################
-
-chmod +x install/mac.sh
-sh install/mac.sh
+print_info "Done."

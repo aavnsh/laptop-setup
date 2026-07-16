@@ -1,0 +1,176 @@
+.git
+.git/**
+.config/dotfiles/_aliases
+.config/dotfiles/_aliases/**
+.DS_Store
+**/.DS_Store
+*.swp
+**/*.swp
+# Runtime state (XDG_STATE_HOME) — pre-push bypass audit log etc. must
+# never be tracked or applied from chezmoi source. See #871.
+.local/state/dotfiles/audit-bypass.log
+.local/state/dotfiles/**
+# Repo-only files and directories (do not apply into $HOME)
+.config/.module-manifest.json
+CHANGELOG.md
+CLAUDE.md
+OPENCODE.md
+CONFIG_STRATEGY.md
+CONTRIBUTING.md
+TODO.md
+Dockerfile.test
+.dockerignore
+.editorconfig
+.gitignore
+.gitattributes
+.gitleaksignore
+.luacheckrc
+.pre-commit-config.yaml
+.secrets.baseline
+.sops.yaml
+LICENSE
+README.md
+treefmt.toml
+config
+config/**
+docs
+docs/**
+.github
+.github/**
+install
+install/**
+install.sh
+scripts
+scripts/**
+templates
+templates/**
+tests
+tests/**
+nix
+nix/**
+.devcontainer
+.devcontainer/**
+# Manual build output (local artefact, never a deploy target)
+_build
+_build/**
+# Language/tool local state dirs that sometimes land in the source tree
+.pnpm-store
+.pnpm-store/**
+# (Note: we DO deploy ~/.claude/CLAUDE.md from dot_claude/ — no blanket
+# .claude/** ignore. Claude Code's other per-machine state under ~/.claude/
+# (agents, cache, .update.lock, etc.) is naturally outside chezmoi's purview
+# because there are no corresponding dot_claude/* source files for it.)
+
+# Node packaging metadata (never deployed to $HOME)
+package.json
+package-lock.json
+mise.toml
+mise-versions.lock.json
+# mise's writable global config (owned by `mise use -g`, not chezmoi).
+# Managed base lives in conf.d/00-dotfiles.toml.
+.config/mise/config.toml
+version-sync.sh
+# Root Nix flake for the repo dev shell (distinct from nix/ home-manager flake)
+flake.nix
+flake.lock
+Makefile
+# Wasm tools live in lib/ — repo-only
+lib
+lib/**
+.well-known
+.well-known/**
+# chezmoi manages its own config via init; don't re-deploy .chezmoi* at root
+.chezmoidata
+.chezmoidata/**
+.chezmoidata.toml
+
+# Local secrets and machine-specific overrides (never committed)
+.profile.local
+.env
+.env.*
+.env.local
+.history
+**/.history
+.ssh/config.local
+.config/chezmoi/chezmoi.local.toml
+.config/git/config-work
+
+# Machine-specific SSH config (managed manually)
+.ssh/config
+.ssh/config.d
+.ssh/config.d/**
+
+.config/nvim/lazy-lock.json
+
+# Feature-gated configs
+{{- if not .features.zellij }}
+.config/zellij
+.config/zellij/**
+{{- end }}
+
+{{- if eq .chezmoi.os "darwin" }}
+.config/i3
+.config/i3/**
+.config/fontconfig
+.config/fontconfig/**
+# Wayland / Linux desktop
+.config/niri
+.config/niri/**
+.config/foot
+.config/foot/**
+.config/fuzzel
+.config/fuzzel/**
+.config/kanshi
+.config/kanshi/**
+.config/mako
+.config/mako/**
+.config/environment.d
+.config/environment.d/**
+.config/systemd
+.config/systemd/**
+.local/bin/start-niri
+.local/share/wayland-sessions
+.local/share/wayland-sessions/**
+{{- end }}
+
+{{- if eq .chezmoi.os "linux" }}
+Library
+Library/**
+.config/karabiner
+.config/karabiner/**
+.config/mas
+.config/mas/**
+.config/duti
+.config/duti/**
+.config/raycast
+.config/raycast/**
+{{- end }}
+
+# Feature-gated Linux desktop configs
+{{- if not .features.foot }}
+.config/foot
+.config/foot/**
+{{- end }}
+{{- if not .features.fuzzel }}
+.config/fuzzel
+.config/fuzzel/**
+{{- end }}
+{{- if not .features.kanshi }}
+.config/kanshi
+.config/kanshi/**
+{{- end }}
+{{- if not .features.niri }}
+.config/niri
+.config/niri/**
+.local/bin/start-niri
+.local/share/wayland-sessions
+.local/share/wayland-sessions/**
+{{- end }}
+{{- if not .features.linux_desktop }}
+.config/environment.d
+.config/environment.d/**
+.config/systemd
+.config/systemd/**
+.config/mako
+.config/mako/**
+{{- end }}

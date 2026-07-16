@@ -1,0 +1,71 @@
+{
+  "api": [
+    "api/apihealth.sh",
+    "api/apilatency.sh",
+    "api/apiload.sh"
+  ],
+  "curl": [
+    "curl/curlheader.sh",
+    "curl/curlstatus.sh",
+    "curl/curltime.sh",
+    "curl/httpdebug.sh"
+  ],
+  "text": [
+    "text/encode64.sh",
+    "text/kebabcase.sh",
+    "text/lowercase.sh",
+    "text/sentencecase.sh",
+    "text/snakecase.sh",
+    "text/titlecase.sh",
+    "text/uppercase.sh"
+  ],
+  "system": [
+    "system/environment.sh",
+    "system/freespace.sh",
+    "system/hostinfo.sh",
+    "system/myproc.sh",
+    "system/sysinfo.sh",
+    "system/whoisport.sh",
+    "system/hstats.sh"
+  ],
+  "files": [
+    "files/backup.sh",
+    "files/extract.sh",
+    "files/hexdump.sh",
+    "files/hiddenfiles.sh",
+    "files/showhiddenfiles.sh",
+    "files/size.sh",
+    "files/zipf.sh",
+    "files/ren.sh",
+    "files/rd.sh",
+    "files/remove_disk.sh"
+  ],
+  "interactive": [
+    "interactive/banner.sh",
+    "interactive/emoji.sh",
+    "interactive/matrix.sh",
+    "interactive/cmatrix.sh",
+    "interactive/rainbow.sh",
+    "interactive/stopwatch.sh"
+  ],
+  "nav": [
+    "nav/cdls.sh",
+    "nav/goto.sh",
+    "nav/ql.sh"
+  ],
+  "security": [
+    "security/genpass.sh",
+    "security/keygen.sh",
+    "security/mount_read_only.sh"
+  ],
+  "misc": [
+    "misc/dothelp.sh",
+    "misc/view-source.sh",
+    "misc/last.sh",
+    "misc/pipes.sh",
+    "misc/prependpath.sh",
+    "misc/caffeine.sh",
+    "misc/logout.sh",
+    "misc/lazy_loaders.sh"
+  ]
+}

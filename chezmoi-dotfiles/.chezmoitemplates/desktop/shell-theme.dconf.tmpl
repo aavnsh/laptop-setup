@@ -1,0 +1,61 @@
+{{- /* GNOME Shell theme configuration via dconf */ -}}
+{{- $t := index .themes (default "catppuccin-mocha" .theme) -}}
+{{- if not $t -}}{{- $t = index .themes "catppuccin-mocha" -}}{{- end -}}
+{{- $is_dark := eq $t.mode "dark" -}}
+{{- $shell_theme := $t.app.gnome_shell -}}
+{{- $background_color := $t.term.bg -}}
+{{- $accent_color := $t.ui.accent -}}
+
+# GNOME Shell theme settings for {{ default "catppuccin-mocha" .theme }}
+# Apply with: dconf load /org/gnome/shell/ < shell-theme.dconf
+
+[/]
+enabled-extensions=['user-theme@gnome-shell-extensions.gcampax.github.com']
+
+[extensions/user-theme]
+{{- if $shell_theme }}
+name='{{ $shell_theme }}'
+{{- else }}
+name=''
+{{- end }}
+
+[/org/gnome/desktop/interface]
+gtk-theme='{{ $t.app.gnome_gtk }}'
+icon-theme='{{ $t.app.gtk_icon }}'
+cursor-theme='Adwaita'
+cursor-size=24
+font-name='Inter 10'
+document-font-name='Inter 10'
+monospace-font-name='JetBrains Mono 10'
+color-scheme='{{ if $is_dark }}prefer-dark{{ else }}prefer-light{{ end }}'
+enable-animations=true
+enable-hot-corners=true
+text-scaling-factor=1.0
+
+[/org/gnome/desktop/wm/preferences]
+theme='{{ if $shell_theme }}{{ $shell_theme }}{{ else }}{{ $t.app.gnome_gtk }}{{ end }}'
+button-layout='close,minimize,maximize:'
+titlebar-font='Inter Bold 10'
+
+[/org/gnome/mutter]
+dynamic-workspaces=true
+edge-tiling=true
+
+[/org/gnome/desktop/background]
+{{- if $t.app.cat_wallpaper }}
+picture-uri='file:///usr/share/backgrounds/catppuccin/{{ $t.app.cat_wallpaper }}'
+picture-uri-dark='file:///usr/share/backgrounds/catppuccin/{{ $t.app.cat_wallpaper }}'
+{{- end }}
+primary-color='{{ $background_color }}'
+secondary-color='{{ $accent_color }}'
+color-shading-type='solid'
+picture-options='zoom'
+
+[/org/gnome/desktop/screensaver]
+{{- if $t.app.cat_wallpaper }}
+picture-uri='file:///usr/share/backgrounds/catppuccin/{{ $t.app.cat_wallpaper }}'
+{{- end }}
+primary-color='{{ $background_color }}'
+secondary-color='{{ $accent_color }}'
+color-shading-type='solid'
+picture-options='zoom'
