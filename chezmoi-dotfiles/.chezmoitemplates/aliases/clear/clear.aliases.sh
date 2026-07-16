@@ -1,0 +1,64 @@
+# shellcheck shell=bash
+# Copyright (c) 2015-2026. All rights reserved.
+# Description: Enhances terminal interaction with aliases for clearing the screen,
+# navigating directories, and displaying directory contents in an organized manner.
+# Website: https://dotfiles.io
+# License: MIT
+################################################################################
+
+# Configurable paths
+WORKSPACE_DIR="${HOME}/workspace"
+
+# Validate directory existence
+validate_dir() {
+  if [[ ! -d "$1" ]]; then
+    echo "Directory $1 not found."
+    return 1
+  fi
+  return 0
+}
+
+# Functions for aliases
+cd_workspace() {
+  validate_dir "${WORKSPACE_DIR}" && cd "${WORKSPACE_DIR}" || return
+}
+
+clear_screen() {
+  clear
+}
+
+clear_list_current() {
+  clear && ls -a
+}
+
+clear_pwd_list() {
+  clear && pwd && echo '' && ls -a && echo ''
+}
+
+clear_pwd_tree() {
+  clear && pwd && echo '' && tree ./ && echo ''
+}
+
+clear_history() {
+  clear && history
+}
+
+print_working_dir() {
+  pwd
+}
+
+clear_print_tree() {
+  clear && tree
+}
+
+# 🅲🅻🅴🅰🆁 🅰🅻🅸🅰🆂🅴🆂
+
+# Alias definitions
+alias cdw='cd_workspace'
+alias c='clear_screen'
+alias cls='clear_list_current'
+alias cpl='clear_pwd_list'
+alias cplt='clear_pwd_tree'
+alias clh='clear_history'
+alias clp='print_working_dir'
+alias clt='clear_print_tree'

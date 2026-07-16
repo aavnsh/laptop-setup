@@ -1,0 +1,55 @@
+{{- $fontFamily := default "JetBrainsMono Nerd Font" .terminal_font_family -}}
+{{- $fontSize := default 20 .terminal_font_size -}}
+{{- $t := index .themes (default "big-sur-dark" .theme) -}}
+{{- if not $t -}}{{- $t = index .themes "big-sur-dark" -}}{{- end }}
+{{- $tt := $t -}}
+{{- $themeName := default "big-sur-dark" .theme -}}
+{{- if hasSuffix "-light" $themeName -}}
+  {{- $darkTheme := index .themes (printf "%s-dark" (trimSuffix "-light" $themeName)) -}}
+  {{- if $darkTheme -}}{{- $tt = $darkTheme -}}{{- end -}}
+{{- end }}
+[window]
+padding = { x = 16, y = 12 }
+opacity = {{ if eq .chezmoi.os "darwin" }}0.92{{ else }}0.96{{ end }}
+option_as_alt = {{ if eq .chezmoi.os "darwin" }}"Both"{{ else }}"None"{{ end }}
+
+[font]
+size = {{ $fontSize }}
+normal = { family = "{{ $fontFamily }}" }
+{{- if eq .chezmoi.os "darwin" }}
+offset = { x = 0, y = 1 }
+{{- else }}
+offset = { x = 0, y = 0 }
+{{- end }}
+
+[colors.primary]
+background = "{{ $tt.term.bg }}"
+foreground = "{{ $tt.term.fg }}"
+
+[colors.cursor]
+cursor = "{{ $tt.term.cursor }}"
+text = "{{ $tt.term.cursor_text }}"
+
+[colors.selection]
+background = "{{ $tt.term.sel_bg }}"
+text = "{{ $tt.term.sel_fg }}"
+
+[colors.normal]
+black = "{{ $tt.term.c0 }}"
+red = "{{ $tt.term.c1 }}"
+green = "{{ $tt.term.c2 }}"
+yellow = "{{ $tt.term.c3 }}"
+blue = "{{ $tt.term.c4 }}"
+magenta = "{{ $tt.term.c5 }}"
+cyan = "{{ $tt.term.c6 }}"
+white = "{{ $tt.term.c7 }}"
+
+[colors.bright]
+black = "{{ $tt.term.c8 }}"
+red = "{{ $tt.term.c9 }}"
+green = "{{ $tt.term.c10 }}"
+yellow = "{{ $tt.term.c11 }}"
+blue = "{{ $tt.term.c12 }}"
+magenta = "{{ $tt.term.c13 }}"
+cyan = "{{ $tt.term.c14 }}"
+white = "{{ $tt.term.c15 }}"

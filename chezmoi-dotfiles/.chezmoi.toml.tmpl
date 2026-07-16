@@ -1,0 +1,103 @@
+# ==============================================================================
+# 1. ENVIRONMENT INFERENCE & DEBUGGING
+# ==============================================================================
+
+# Try to infer source directory
+{{- $pwd := env "PWD" -}}
+{{- $inferredDir := .chezmoi.workingTree -}}
+{{- if not $inferredDir -}}
+  {{- $inferredDir = $pwd -}}
+{{- end -}}
+
+{{- $isValidRepo := false -}}
+{{- if $inferredDir -}}
+  {{- if or (stat (joinPath $inferredDir ".git")) (hasSuffix "dotfiles" $inferredDir) -}}
+    {{- $isValidRepo = true -}}
+  {{- end -}}
+{{- end -}}
+
+# ==============================================================================
+# 2. SOURCE DIRECTORY SELECTION
+# ==============================================================================
+{{- $sourceDir := "" -}}
+{{- if $isValidRepo -}}
+  {{- writeToStdout (printf "[INFO] Automatically detected source directory: '%s'\n" $inferredDir) -}}
+  {{- $sourceDir = $inferredDir -}}
+{{- else -}}
+  {{- writeToStdout "[WARN] Could not automatically infer a valid dotfiles source directory.\n" -}}
+  {{- $defaultFallback := joinPath .chezmoi.homeDir ".local" "share" "chezmoi" -}}
+  {{- $sourceDir = promptString "👉 Enter custom source directory path" $defaultFallback -}}
+{{- end -}}
+
+sourceDir = {{ $sourceDir | quote }}
+
+# ==============================================================================
+# 3. USER IDENTITY INFERENCE (GIT)
+# ==============================================================================
+
+# --- A. DETECT GIT NAME ---
+{{- $inferredName := env "GIT_AUTHOR_NAME" -}}
+{{- if not $inferredName -}}
+  # Fallback to existing git config on the system if available
+  {{- if lookPath "git" -}}
+    {{- $inferredName = output "git" "config" "--global" "user.name" | trim -}}
+  {{- end -}}
+{{- end -}}
+
+# --- B. DETECT GIT EMAIL ---
+{{- $inferredEmail := env "GIT_AUTHOR_EMAIL" -}}
+{{- if not $inferredEmail -}}
+  # Fallback to existing git config on the system if available
+  {{- if lookPath "git" -}}
+    {{- $inferredEmail = output "git" "config" "--global" "user.email" | trim -}}
+  {{- end -}}
+{{- end -}}
+
+# --- C. PROMPT WITH INFERRED DEFAULTS ---
+# If inferred successfully, promptStringOnce will use it as the default so you just hit Enter.
+{{- $name := "" -}}
+{{- if $inferredName -}}
+  {{- writeToStdout (printf "[INFO] Inferred Git Name: '%s'\n" $inferredName) -}}
+  {{- $name = promptStringOnce . "name" "👉 Confirm or enter your Git Name" $inferredName -}}
+{{- else -}}
+  {{- $name = promptStringOnce . "name" "👉 Git user name (First Last)" -}}
+{{- end -}}
+
+{{- $email := "" -}}
+{{- if $inferredEmail -}}
+  {{- writeToStdout (printf "[INFO] Inferred Git Email: '%s'\n" $inferredEmail) -}}
+  {{- $email = promptStringOnce . "email" "👉 Confirm or enter your Git Email" $inferredEmail -}}
+{{- else -}}
+  {{- $email = promptStringOnce . "email" "👉 Git email address" -}}
+{{- end -}}
+
+# ==============================================================================
+# 4. GPG PATH DISCOVERY
+# ==============================================================================
+{{- $gpgPath := "" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+  {{- if lookPath "gpg" -}}
+    {{- $gpgPath = lookPath "gpg" -}}
+  {{- else if lookPath "gpg2" -}}
+    {{- $gpgPath = lookPath "gpg2" -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $gpgSigningKey := "" -}}
+{{- $gpgSigningKey = promptStringOnce . "gpgSigningKey" "👉 Confirm or enter your gpgSigningKey" $gpgSigningKey -}}
+{{- if $gpgPath -}}
+  {{- writeToStdout (printf "[INFO] Found GPG binary at: '%s'. Enabling commit signing.\n" $gpgPath) -}}
+
+{{- else -}}
+  {{- writeToStdout "[WARN] GPG binary not found in PATH. Disabling commit signing.\n" -}}
+{{- end -}}
+
+# ==============================================================================
+# 5. EXPORTED DATA VARIABLES
+# ==============================================================================
+sourceDir = {{ $sourceDir | quote }}
+[data]
+    email = {{ $email | quote }}
+    name = {{ $name | quote }}
+    gpgPath = {{ $gpgPath | quote }}
+    gpgSigningKey = {{ $gpgSigningKey | quote }}

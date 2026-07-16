@@ -1,0 +1,9 @@
+# shellcheck shell=bash
+# Copyright (c) 2015-2026 Dotfiles. All rights reserved.
+# CD Navigation - Directory Stack Management
+[[ -n "${_CD_STACK_LOADED:-}" ]] && :
+_CD_STACK_LOADED=1
+
+alias dirs='dirs -v'        # List directory stack with indices
+alias pd='pushd'            # Push directory to stack
+alias popd='popd && ls -lh' # Pop directory from stack and list contents

@@ -1,0 +1,63 @@
+# Aider configuration
+# https://aider.chat/docs/config/options.html
+
+# Model settings
+# model: ollama_chat/qwen2.5-coder:32b-instruct-q4_K_M
+model: ollama_chat/qwen2.5-coder:14b-instruct-q4_K_M
+model-settings:
+  num_ctx: 32768
+  
+edit-format: diff
+
+# Git settings
+# --- Git & Commit Control ---
+# Disables auto-commits so you can manually review code before staging
+
+auto-commits: false
+# Prevents Aider from force-committing your own uncommitted work when it starts up
+
+dirty-commits: false
+attribute-author: true
+# attribute-commit-message: true
+
+# UI settings
+# Opens a browser window with Aider's Web UI (set to false if you strictly prefer the terminal)
+gui: false
+# Enables rich, colorful, and formatted terminal output
+pretty: true
+# Uses stream output so you see code generating in real-time
+stream: true
+
+# --- Token & Cost Efficiency ---
+# Keeps a map of your entire repo to give the LLM context without blowing your token budget
+# repo-map-tokens: 1024
+# does not seem to be working?
+# --- Search & Token Optimization ---
+map-tokens: 2048               # Size of the Tree-sitter repo-map context
+cache-prompts: true            # Saves massive token costs on Claude/DeepSeek by caching context
+
+
+dark-mode: true
+
+# Code settings
+# auto-lint: true
+# lint-cmd:
+#  - "[ -f package.json ] && npm run lint"
+# auto-test: false
+
+# File handling
+# Automatically adds Aider's internal files (.aider*) to your .gitignore
+gitignore: true
+aiderignore: true
+
+# History
+restore-chat-history: true
+
+# Voice (if enabled)
+# voice-language: en
+
+# Suggested: Automatically look for and read a project rules/skills file if it exists
+read:
+  - {{ .chezmoi.homeDir }}/.agents/skills/implement-here/SKILL.md
+  - {{ .chezmoi.homeDir }}/.agents/skills/specify/SKILL.md
+  - {{ .chezmoi.homeDir }}/.agents/skills/clarify/SKILL.md

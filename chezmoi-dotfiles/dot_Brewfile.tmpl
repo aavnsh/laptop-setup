@@ -1,0 +1,118 @@
+{{ if eq .chezmoi.os "darwin" -}}
+tap "anomalyco/tap"
+tap "supabase/tap"
+# Supabase CLI
+brew "supabase/tap/supabase", trusted: true
+# Incredibly fast JavaScript runtime, bundler, test runner, and package manager
+brew "bun"
+# Binary installation for rust projects
+brew "cargo-binstall"
+# Manage your dotfiles across multiple diverse machines, securely
+brew "chezmoi"
+# Dependency manager for Cocoa projects
+brew "cocoapods"
+# Speech synthesizer that supports more than hundred languages and accents
+brew "espeak-ng"
+# Simple, fast and user-friendly alternative to find
+brew "fd"
+# Play, record, convert, and stream select audio and video codecs
+brew "ffmpeg"
+# Command-line fuzzy finder written in Go
+brew "fzf"
+# GitHub command-line tool
+brew "gh"
+# Interpreter for PostScript and PDF
+brew "ghostscript"
+# Tool for glamorous shell scripts
+brew "gum"
+# Improved top (interactive process viewer)
+brew "htop"
+# Lightweight and flexible command-line JSON processor
+brew "jq"
+# Postgres C API library
+brew "libpq", link: true
+# Clone of ls with colorful output, file type icons, and more
+brew "lsd"
+# ls replacement
+brew "eza"
+
+# Tool for managing OCI containers and pods
+brew "podman"
+# Cross-shell prompt for astronauts
+brew "starship"
+# Extremely fast Python package installer and resolver, written in Rust
+brew "uv"
+# Enable Windows-like alt-tab
+cask "alt-tab"
+cask "font-fira-code-nerd-font"
+# Terminal emulator that uses platform-native UI and GPU acceleration
+cask "ghostty"
+brew "fish"
+# Replacement for Docker Desktop
+cask "orbstack"
+# Browse, manage, inspect containers and images
+cask "podman-desktop"
+# Move and resize windows using keyboard shortcuts or snap areas
+cask "rectangle"
+# System monitor for the menu bar
+cask "stats"
+# Multiplayer code editor
+cask "zed"
+go "cmd/go"
+go "cmd/gofmt"
+cargo "zellij"
+uv "graphifyy"
+uv "ruff"
+cask "raycast"
+cask "font-fira-code-nerd-font"
+cask "Antigravity"
+cask "zenmap"
+cask "itsycal"  # nice calendar status bar app
+
+# Once installed you will need to manually do these steps as
+# This version we got was unable to be opened as apple cached
+# its signature and we no manual resolution was availible
+# try later once cask version is updated (Jul 6 2026)
+# cask "stremio"
+
+cask "utm"  # virtual machine manager - did a force install manually once
+# cask "private-internet-access" # unable to make it work using cask
+# cask "scribus"  # Open source desktop publishing
+cask "imageoptim"
+cask "logseq"
+mas "Patterns", id: 429449079  # Paid app - 2.99 - for quick regex debugging
+# TODO
+#cask "libreoffice"
+#cask "visual-studio-code"
+cask "claude-code"
+cask "claude"
+# GUI to manage launchtl services.
+# Alt is Service Station that can be installed from app store
+cask "launchcontrol"
+brew "gpg2"
+brew "bat" # better than cat
+brew "aider" # aider.chat AI pair programming tool
+
+# cmux - multi agent terminal emulator
+tap "manaflow-ai/cmux"
+cask "cmux"
+
+brew "just" # manage project specific commands in .justfile
+
+cask "opensuperwhisper" # Voice Transcription app for mac
+
+brew "gum" # glamorous shell scripts
+
+brew "zoxide" # zoxide is a smarter cd command
+brew "atuin"  # Smarter shell history
+brew "yazi" # Terminal File Manager
+brew "ripgrep" #Ripgrep aka rg line-oriented search tool that recursively searches the current directory for a regex pattern
+
+brew "pueue" #command-line task management tool for sequential and parallel execution of long-running tasks
+brew "wasmtime"   # standalone runtime for WebAssembly
+brew "sops"  # SOPS: Secrets OPerationS Simple And Flexible Tool For Managing Secrets                             
+brew "age"   # Simple, modern, secure file encryption                              
+brew "hyperfine" # Command-line benchmarking tool
+brew "btop" # htop ++ 
+
+{{ end -}}

@@ -1,0 +1,78 @@
+{{- /* Resolve git variables with fallback */ -}}
+{{- $git_name := coalesce (index . "git_name") (index . "name") "" -}}
+{{- $git_email := coalesce (index . "git_email") (index . "email") "" -}}
+{{- $git_signingkey := coalesce (index . "gpgSigningKey") (index . "signingkey") "" -}}
+{{- $git_signingformat := coalesce (index . "git_signingformat") "ssh" -}}
+
+
+[user]
+    name = {{ .name }}
+    email = {{ .email }}
+
+
+{{- if $git_signingkey }}
+
+[commit]
+	gpgsign = false
+	template = {{ .chezmoi.homeDir }}/.config/git/commit-template
+
+[gpg]
+	format = {{ $git_signingformat }}
+
+[gpg "ssh"]
+	allowedSignersFile = {{ .chezmoi.homeDir }}/.config/git/allowed_signers
+
+[tag]
+	gpgSign = false
+	forceSignAnnotated = true
+{{- end }}
+
+[push]
+    autoSetupRemote = true
+[core]
+    excludesfile = {{ .chezmoi.homeDir }}/.config/git/gitignore_global
+    editor = zed -n
+    whitespace = space-before-tab,indent-with-non-tab,trailing-space,cr-at-eol
+[web]
+    browser = google-chrome
+[rerere]
+    enabled = 1
+    autoupdate = 1
+[color]
+    ui = true
+[color "branch"]
+    current = yellow bold
+    local = green bold
+    remote = cyan bold
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+    whitespace = red reverse
+[color "status"]
+    added = green bold
+    changed = yellow bold
+    untracked = red bold
+[push]
+    default = simple
+[filter "media"]
+    required = true
+    clean = git media clean %f
+    smudge = git media smudge %f
+[filter "lfs"]
+    clean = git lfs clean %f
+    smudge = git lfs smudge %f
+    required = true
+[credential]
+    helper = osxkeychain
+[difftool "sourcetree"]
+    cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+    path =
+[mergetool "sourcetree"]
+    cmd = /opt/homebrew-cask/Caskroom/sourcetree/2.1/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+    trustExitCode = true
+[alias]
+    aliases = "!git config --get-regexp '^alias\\.' | awk '{print $1 \" => \" $2}' | sed 's/alias.//'"
+    last = log -1 HEAD
+    lg = !git log --graph --pretty=format:'%Cred%h%Creset -%Cd%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=short

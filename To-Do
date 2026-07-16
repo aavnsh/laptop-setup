@@ -1,0 +1,48 @@
+Add to chezmoi
+1. Gitconfig to be added as a template since it contains email/username etc which should become variables
+2. .zshrc but also add keybinding for option + del to delete word and ctrl + backspace to delete line
+3. Add to notes somewhere - view/search the services/daemons of launctl/launchd more easily
+launchctl list | fzf --header="Select a service to inspect" --preview 'launchctl print gui/'$(id -u)'/{}'
+4. [Start Shell] ──> .zshenv ──> .zprofile ──> .zshrc ──> .zlogin
+
+Purpose: .zwc stands for Zsh Word Code. It is a compiled, binary version of your .zshrc file
+generated via zcompile .zshrc
+It allows Zsh to load faster by reading a binary memory map instead of parsing a text file.
+
+Gotcha: If you modify .zshrc but forget to re-run zcompile,
+Zsh might ignore your text changes and keep reading the old compiled .zwc file.
+
+To debug - run zsh -xv
+--------------------------------------------------------------
+zmodload zsh/zprof
+--> Loading d.zshenv
+--> Loading d.c.z.zprofile
+--> Loading d.c.z.zshrc
+--> Loading d.c.z.r.00-alias
+--> Loading d.c.z.r.05-ssh
+--> Loading d.c.z.r.10-env
+--> Loading d.c.z.r.20-zinit
+--> Loading d.c.z.r.30-options
+--> Loading d.c.z.r.40-bell
+--> Loading d.c.z.r.50-login-fortune
+--> Loading d.c.z.r.99-alias-wrapper
+zprof
+---------------------------------------------------------------
+➜ dcds
+--> Loading d.c.s.10-secrets
+--> Loading d.c.s.91-ux-aliases
+--> Loading d.c.s.51-logic
+zsh: command not found: dcds
+---------------------------------------------------------------
+
+
+
+6. Debug - speed - general idea of time taken to load shell
+time zsh -i -c exit
+
+7. Debug - speed - to root-cause sluggishness
+Add to top of ~/.zshenv
+zmodload zsh/zprof
+
+& Bottom of ~/.zshrc
+zprof

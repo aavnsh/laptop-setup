@@ -1,0 +1,215 @@
+echo "--> Loading d.c.z.r.30-options"
+# Zsh history and options
+HISTFILE="${HOME}/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_SAVE_NO_DUPS
+setopt HIST_EXPIRE_DUPS_FIRST
+setopt HIST_FIND_NO_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_REDUCE_BLANKS
+setopt EXTENDED_HISTORY
+setopt SHARE_HISTORY
+setopt APPEND_HISTORY
+setopt HIST_SAVE_BY_COPY
+setopt INTERACTIVE_COMMENTS
+
+setopt AUTO_CD
+setopt AUTO_PUSHD
+setopt PUSHD_IGNORE_DUPS
+setopt PUSHD_SILENT
+setopt NO_BEEP
+
+bindkey -v
+
+# Fix: prevent auto-indent when pasting multi-line content (vi mode)
+autoload -Uz bracketed-paste-magic
+zle -N bracketed-paste bracketed-paste-magic
+
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey -M viins "^[[A" up-line-or-beginning-search
+bindkey -M viins "^[[B" down-line-or-beginning-search
+bindkey -M viins "^P" up-line-or-beginning-search
+bindkey -M viins "^N" down-line-or-beginning-search
+
+ZSH_COMPLETIONS_DIR="${XDG_DATA_HOME:-${HOME}/.local/share}/zsh/completions"
+if [[ ! -d "${ZSH_COMPLETIONS_DIR}" ]]; then
+  command mkdir -p "${ZSH_COMPLETIONS_DIR}"
+fi
+if [[ -z ${fpath[(r)${ZSH_COMPLETIONS_DIR}]} ]]; then
+  fpath=("${ZSH_COMPLETIONS_DIR}" "${fpath[@]}")
+fi
+{{- /* Node.js version manager: configured via .chezmoidata.toml tools.node_manager */ -}}
+{{- $node_mgr := default "mise" .tools.node_manager -}}
+{{- if eq $node_mgr "fnm" }}
+# fnm (Fast Node Manager)
+# Initialize early so Node + corepack use the expected version.
+if [[ "${DOTFILES_FAST:-0}" != "1" ]] && [[ "${DOTFILES_ULTRA_FAST:-0}" != "1" ]] && command -v fnm >/dev/null; then
+  if [[ ! -f "${ZSH_COMPLETIONS_DIR}/_fnm" ]]; then
+    command fnm completions --shell zsh >| "${ZSH_COMPLETIONS_DIR}/_fnm"
+  fi
+  _lazy_load_fnm() {
+    unfunction node npm npx pnpm pnpx fnm _lazy_load_fnm 2>/dev/null
+    eval "$(command fnm env --use-on-cd --shell zsh --log-level quiet)"
+  }
+  fnm() { _lazy_load_fnm; command fnm "$@"; }
+  node() { _lazy_load_fnm; command node "$@"; }
+  npm() { _lazy_load_fnm; command npm "$@"; }
+  npx() { _lazy_load_fnm; command npx "$@"; }
+  pnpm() { _lazy_load_fnm; command pnpm "$@"; }
+  pnpx() { _lazy_load_fnm; command pnpx "$@"; }
+fi
+{{- end }}
+{{- /* When node_manager = "mise", Node.js is handled by mise activate in dot_zshrc.tmpl */}}
+
+# Completions: generated on-demand on first interactive shell and cached
+if [[ "${DOTFILES_FAST:-0}" != "1" ]] && [[ "${DOTFILES_ULTRA_FAST:-0}" != "1" ]]; then
+  [[ ! -f "${ZSH_COMPLETIONS_DIR}/_gh" ]] && command -v gh >/dev/null &&
+    command gh completion -s zsh >| "${ZSH_COMPLETIONS_DIR}/_gh"
+  [[ ! -f "${ZSH_COMPLETIONS_DIR}/_just" ]] && command -v just >/dev/null &&
+    command just --completions zsh >| "${ZSH_COMPLETIONS_DIR}/_just"
+  [[ ! -f "${ZSH_COMPLETIONS_DIR}/_chezmoi" ]] && command -v chezmoi >/dev/null &&
+    command chezmoi completion zsh >| "${ZSH_COMPLETIONS_DIR}/_chezmoi"
+  [[ ! -f "${ZSH_COMPLETIONS_DIR}/_kubectl" ]] && command -v kubectl >/dev/null &&
+    command kubectl completion zsh >| "${ZSH_COMPLETIONS_DIR}/_kubectl"
+  [[ ! -f "${ZSH_COMPLETIONS_DIR}/_atuin" ]] && command -v atuin >/dev/null &&
+    command atuin gen-completions --shell zsh --out-dir "${ZSH_COMPLETIONS_DIR}" 2>/dev/null
+  [[ ! -f "${ZSH_COMPLETIONS_DIR}/_mise" ]] && command -v mise >/dev/null &&
+    command mise completions zsh >| "${ZSH_COMPLETIONS_DIR}/_mise" 2>/dev/null
+fi
+
+{{- if eq $node_mgr "nvm" }}
+# Lazy-load NVM
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [[ "${DOTFILES_FAST:-0}" != "1" ]] && [[ "${DOTFILES_ULTRA_FAST:-0}" != "1" ]]; then
+  if [[ -s "${NVM_DIR}/nvm.sh" ]]; then
+    _lazy_load_nvm() {
+      unfunction node npm npx nvm _lazy_load_nvm 2>/dev/null
+      # shellcheck disable=SC1090
+      . "${NVM_DIR}/nvm.sh"
+      if [[ -s "${NVM_DIR}/bash_completion" ]]; then
+        # shellcheck disable=SC1090
+        . "${NVM_DIR}/bash_completion"
+      fi
+    }
+    nvm() { _lazy_load_nvm; nvm "$@"; }
+    node() { _lazy_load_nvm; command node "$@"; }
+    npm() { _lazy_load_nvm; command npm "$@"; }
+    npx() { _lazy_load_nvm; command npx "$@"; }
+  fi
+fi
+{{- end }}
+
+# Lazy-load SDKMAN
+export SDKMAN_DIR="${SDKMAN_DIR:-$HOME/.sdkman}"
+if [[ "${DOTFILES_FAST:-0}" != "1" ]] && [[ "${DOTFILES_ULTRA_FAST:-0}" != "1" ]] && [[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" && -z "${functions[sdk]:-}" ]]; then
+  _lazy_load_sdkman() {
+    unfunction sdk _lazy_load_sdkman 2>/dev/null
+    # shellcheck disable=SC1090
+    . "${SDKMAN_DIR}/bin/sdkman-init.sh"
+  }
+  sdk() { _lazy_load_sdkman; sdk "$@"; }
+fi
+# Defer compinit to first prompt — opt-in for max performance.
+#
+# Cache lifecycle (closes #864):
+#   * dump path lives at $XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION so
+#     the user-state directory is clean (and zsh's own search picks up
+#     `.zwc` siblings automatically — non-laptop profiles get the
+#     benefit even without re-running compinit).
+#   * `compinit -C` (skip security-check, use the cached dump) is used
+#     when the dump is fresh (< 24 h); full `compinit` rebuilds when
+#     the dump is older.
+#   * The dump is `zcompile`d in the background after each rebuild so
+#     subsequent shells load the bytecode form directly.
+#   * The fpath corpus itself is precompiled at chezmoi-apply time by
+#     `run_onchange_after_zcompile-completions.sh.tmpl` — that runs
+#     once per fpath change, not per shell start.
+: ${DOTFILES_ENABLE_COMPINIT:=0}
+: ${DOTFILES_DEFER_COMPINIT:=1}
+
+_DOTFILES_ZCOMPDUMP="${XDG_CACHE_HOME:-${HOME}/.cache}/zsh/zcompdump-${ZSH_VERSION:-${ZSH_NAME:-unknown}}"
+
+if [[ "${DOTFILES_ENABLE_COMPINIT}" == "1" ]] && [[ "${DOTFILES_FAST:-0}" != "1" ]] && [[ "${DOTFILES_ULTRA_FAST:-0}" != "1" ]]; then
+  autoload -Uz compinit
+  [[ -d "${_DOTFILES_ZCOMPDUMP:h}" ]] || mkdir -p "${_DOTFILES_ZCOMPDUMP:h}"
+
+  _deferred_compinit() {
+    if [[ "${DOTFILES_DEFER_COMPINIT}" == "1" ]]; then
+      _dotfiles_del_preexec _deferred_compinit
+    else
+      _dotfiles_del_precmd _deferred_compinit
+    fi
+    # Fresh dump (< 24 h) → use cached fast path; otherwise rebuild.
+    if [[ -n ${_DOTFILES_ZCOMPDUMP}(#qN.mh+24) ]]; then
+      compinit -d "${_DOTFILES_ZCOMPDUMP}"
+    else
+      compinit -C -d "${_DOTFILES_ZCOMPDUMP}"
+    fi
+    # Compile to bytecode in background for faster subsequent loads
+    { [[ ! -f "${_DOTFILES_ZCOMPDUMP}.zwc" || "${_DOTFILES_ZCOMPDUMP}" -nt "${_DOTFILES_ZCOMPDUMP}.zwc" ]] && zcompile "${_DOTFILES_ZCOMPDUMP}" } &!
+  }
+  if [[ "${DOTFILES_DEFER_COMPINIT}" == "1" ]]; then
+    _dotfiles_add_preexec _deferred_compinit
+  else
+    _dotfiles_add_precmd _deferred_compinit
+  fi
+
+  zstyle ':completion:*' menu select
+  zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+  zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+  zstyle ':completion:*' special-dirs true
+  zstyle ':completion:*' verbose yes
+fi
+
+# Colors (opt-in; enables $fg/$bg variables)
+: ${DOTFILES_ENABLE_COLORS:=0}
+if [[ "${DOTFILES_ENABLE_COLORS}" == "1" ]]; then
+  : ${DOTFILES_DEFER_COLORS:=1}
+  if [[ "${DOTFILES_DEFER_COLORS}" == "1" ]]; then
+    _dotfiles_colors_zle_init() {
+      zle -D zle-line-init
+      # Skip when running -c (no prompt)
+      [[ -n "${ZSH_EXECUTION_STRING:-}" ]] && return 0
+      autoload -Uz colors && colors
+    }
+    zle -N zle-line-init _dotfiles_colors_zle_init
+  else
+    autoload -Uz colors && colors
+  fi
+fi
+unsetopt correct_all
+
+# fzf integration
+if [[ "${DOTFILES_FAST:-0}" != "1" ]] && [[ "${DOTFILES_ULTRA_FAST:-0}" != "1" ]]; then
+  if [[ -f "${HOME}/.config/fzf/fzf.zsh" ]]; then
+    source "${HOME}/.config/fzf/fzf.zsh"
+  elif [[ -f "${HOME}/.fzf.zsh" ]]; then
+    source "${HOME}/.fzf.zsh"
+  fi
+fi
+
+# Explicit fzf bindings (fallback if not already set by fzf)
+if [[ "${DOTFILES_FAST:-0}" != "1" ]] && [[ "${DOTFILES_ULTRA_FAST:-0}" != "1" ]] && command -v fzf >/dev/null; then
+  bindkey -M viins -s '^T' 'fzf^M'
+  bindkey -M viins -s '^R' 'fzf^M'
+fi
+
+# direnv (directory environments)
+if [[ "${DOTFILES_FAST:-0}" != "1" ]] && [[ "${DOTFILES_ULTRA_FAST:-0}" != "1" ]] && command -v direnv >/dev/null; then
+  # Custom quiet hook: suppress direnv status chatter on every prompt/chdir.
+  _dotfiles_direnv_hook() {
+    # Fast path: skip direnv in dotfiles unless flake mode is explicitly enabled.
+    if [[ "${PWD:A}" == "${HOME}/.dotfiles"* ]] && [[ "${DOTFILES_USE_FLAKE:-0}" != "1" ]] && [[ "${CI:-0}" != "1" ]]; then
+      return 0
+    fi
+    trap -- '' SIGINT
+    eval "$(direnv export zsh 2>/dev/null)"
+    trap - SIGINT
+  }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook chpwd _dotfiles_direnv_hook
+fi

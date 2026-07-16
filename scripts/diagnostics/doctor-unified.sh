@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2015-2026 Sebastien Rousseau
+# Unified doctor orchestrator — parses flags and dispatches to existing scripts.
+set -euo pipefail
+
+_cleanup_files=()
+trap 'set +u; rm -f "${_cleanup_files[@]}" 2>/dev/null; set -u' EXIT
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=../../lib/dot/ui.sh
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../../lib/dot/ui.sh"
+ui_init
+
+passthrough=()
+target="scripts/diagnostics/doctor.sh"
+
+for arg in "$@"; do
+  case "$arg" in
+    --heal | -H) target="scripts/ops/heal.sh" ;;
+    --audit | -a) target="scripts/ops/health-check.sh" ;;
+    --score | -s) target="scripts/diagnostics/scorecard.sh" ;;
+    --smoke | -m) target="scripts/diagnostics/smoke-test.sh" ;;
+    --drift | -d) target="scripts/diagnostics/drift-dashboard.sh" ;;
+    --benchmark | -b) target="tests/benchmark.sh" ;;
+    --json | -j | --ai | -A) passthrough+=("$arg") ;;
+    *) passthrough+=("$arg") ;;
+  esac
+done
+
+script="$REPO_ROOT/$target"
+if [[ ! -f "$script" ]]; then
+  ui_err "Script not found" "$target"
+  exit 1
+fi
+
+exec bash "$script" "${passthrough[@]+"${passthrough[@]}"}"

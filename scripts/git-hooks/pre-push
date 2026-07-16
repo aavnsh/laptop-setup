@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# Copyright (c) 2015-2026 Dotfiles. All rights reserved.
+# =============================================================================
+# pre-push hook
+#
+# 1. Refuses to push any commit that is not GPG/SSH-signed.
+# 2. Runs `scripts/qa/reliability-audit.sh --quick`. The audit is mandatory
+#    by default; explicit per-push bypass requires `DOTFILES_ALLOW_UNSKIPPED_PUSH=1`,
+#    and every bypass is logged to `~/.local/share/dotfiles/audit-bypass.log`.
+#
+# The legacy `DOTFILES_SKIP_PRE_PUSH_AUDIT=1` env var (opt-out) is rejected
+# with a migration message. The new variable is intentionally awkwardly
+# named so that setting it requires deliberate intent. See
+# `docs/security/AUDIT_BYPASS.md`.
+# =============================================================================
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+# -----------------------------------------------------------------------------
+# Step 1 — signed-commit enforcement (unchanged)
+# -----------------------------------------------------------------------------
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    range="$local_sha"
+  elif git cat-file -e "${remote_sha}^{commit}" 2>/dev/null; then
+    range="$remote_sha..$local_sha"
+  else
+    # Remote tip is not in the local object store yet (push without prior fetch).
+    # Fall back to checking commits reachable from local tip.
+    range="$local_sha"
+  fi
+
+  for c in $(git rev-list "$range"); do
+    if ! git verify-commit "$c" >/dev/null 2>&1; then
+      echo "Blocked: unsigned commit $c" >&2
+      exit 1
+    fi
+  done
+done
+
+# -----------------------------------------------------------------------------
+# Step 2 — reject the legacy opt-out variable
+# -----------------------------------------------------------------------------
+if [ "${DOTFILES_SKIP_PRE_PUSH_AUDIT:-}" = "1" ]; then
+  cat >&2 <<'EOF'
+ERROR: DOTFILES_SKIP_PRE_PUSH_AUDIT is no longer honored.
+
+The pre-push audit was previously opt-out — setting one env var was enough
+to skip it. That made bypass invisible and routine. Effective with #871,
+the policy is fail-closed: the audit always runs unless you explicitly
+authorize a bypass for this single push.
+
+To bypass for one push:
+  DOTFILES_ALLOW_UNSKIPPED_PUSH=1 git push
+
+Every bypass is recorded to ~/.local/share/dotfiles/audit-bypass.log
+and surfaced by `dot doctor` if any are recent.
+
+See: docs/security/AUDIT_BYPASS.md
+EOF
+  exit 1
+fi
+
+# -----------------------------------------------------------------------------
+# Step 3 — run the audit (or log + skip if explicitly bypassed)
+# -----------------------------------------------------------------------------
+if [ "${DOTFILES_ALLOW_UNSKIPPED_PUSH:-}" = "1" ]; then
+  bypass_log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
+  # The audit-bypass log lives under XDG_STATE_HOME (user state — never
+  # checked in, never deployed by chezmoi to other locations).
+  mkdir -p "$bypass_log_dir"
+  bypass_log="$bypass_log_dir/audit-bypass.log"
+
+  ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+  remote="$(git remote get-url --push @{upstream} 2>/dev/null ||
+    git config --get remote.origin.url 2>/dev/null ||
+    echo unknown)"
+  reason="${DOTFILES_BYPASS_REASON:-no reason given}"
+
+  printf '%s\tbranch=%s\tremote=%s\treason=%s\n' \
+    "$ts" "$branch" "$remote" "$reason" >>"$bypass_log"
+
+  echo "WARN: pre-push audit bypassed (logged to $bypass_log)" >&2
+  exit 0
+fi
+
+bash "$repo_root/scripts/qa/reliability-audit.sh" --quick
+
+# Step 4 — version-string consistency. Catches the case where the
+# canonical version in .chezmoidata.toml advanced but a human-visible
+# surface (CLI banner, man page, README badge) wasn't bumped. The
+# script is cheap (~8 grep calls); failure tells the user exactly
+# which file drifted and offers --fix.
+bash "$repo_root/scripts/qa/check-version-consistency.sh" --quiet || {
+  echo "" >&2
+  echo "Pre-push blocked: version-string drift detected." >&2
+  echo "Run: scripts/qa/check-version-consistency.sh" >&2
+  echo "Then: scripts/qa/check-version-consistency.sh --fix    (optional auto-fix)" >&2
+  exit 1
+}

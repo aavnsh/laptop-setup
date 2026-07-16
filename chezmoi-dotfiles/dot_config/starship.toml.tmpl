@@ -1,0 +1,327 @@
+# Starship Configuration
+# https://starship.rs/config/
+
+right_format = """$cmd_duration$status"""
+
+# Configure the fill module character (can be a space or a symbol)
+# Unused but can add $fill to the format so that left aka $format and $right_format are
+# seperated by many $fill
+[fill]
+symbol = " " # Empty space pushing items to the right
+
+# Some toolchains (notably Node via mise on macOS) can exceed 2s on cold start.
+# Raise timeout to avoid spurious prompt warnings.
+command_timeout = 5000
+add_newline = true
+# Palette driven by starship_palette in .chezmoidata/themes.toml
+palette = "catppuccin_mocha"
+
+[character]
+#success_symbol = "[➜](bold green)"
+#error_symbol = "[➜](bold red)"
+#vicmd_symbol = "[❮](green bold)"
+# capsule
+success_symbol = "[➜](bold #81a1c1)"
+error_symbol = "[➜](bold #bf616a)"
+vicmd_symbol = "[❮](bold #a3be8c)"
+
+[package]
+disabled = true
+
+[git_branch]
+#symbol = "> "
+#symbol = "🌿 "
+#style = "bold yellow"
+#style = "bg:#b16286 fg:#ffffff"
+#format = "on [$symbol$branch]($style) "
+
+#style = "bg:#d14949 fg:#ffffff bold"
+#format = "[](fg:#801b29 bg:#d14949)[ $symbol$branch ]($style)"
+
+# "Soft Capsule" (Using Rounded Glyphs)
+#symbol = " "
+#style = "bg:#3b4252 fg:#b48ead bold"
+#format = "[](fg:#3b4252)[$symbol$branch]($style)[](fg:#3b4252) "
+
+symbol = " "
+style = "bg:#3b4252 fg:#b48ead bold" # Soft Lavender text on Medium Graphite
+# Left side of the capsule: opens with , but does NOT close with 
+format = "[](fg:#3b4252)[$symbol$branch]($style)"
+
+# Cyberpunk Slash" (Using Angled Glyphs)
+#symbol = " "
+#style = "bg:#89b4fa fg:#1e1e2e bold"
+#format = "[](fg:#1e1e2e bg:#89b4fa)[ $symbol$branch ]($style)"
+
+
+[git_status]
+disabled = false
+#style = "bold red"
+#style = "bg:#d14949 fg:#ffffff"
+#format = "[$all_status$ahead_behind ]($style)"
+# capsule
+#style = "bg:#3b4252 fg:#bf616a" # Soft Coral/Red for changes
+#format = "[](fg:#3b4252 bg:#3b4252)[$all_status$ahead_behind]($style)[](fg:#3b4252) "
+
+#style = "bg:#3b4252 fg:#b48ead bold"
+# style = "bg:#3b4252 fg:#bf616a" # Soft Coral/Red for changes
+# Right side of the capsule: adds a space, displays status, and closes with 
+# format = "[ $all_status$ahead_behind]($style)[](fg:#3b4252) "
+
+# format = "[ $all_status$ahead_behind](bg:#3b4252 fg:#b48ead bold)[](fg:#3b4252) "
+
+style = "bg:#3b4252 fg:#f97316 bold"
+# Note: The space is placed inside the styling bracket so it stays clean
+format = "[$all_status$ahead_behind]($style)[](fg:#3b4252) "
+
+[hostname]
+ssh_only = false
+trim_at = "."
+#format = "[$hostname](bold blue) "
+disabled = false
+style = "bg:#2e3440 fg:#ebcb8b bold"
+# Wrapped in rounded glyphs with matching fg coloring
+format = "[](fg:#2e3440)[󰒋 $hostname]($style)[](fg:#2e3440) "
+
+[username]
+#style_user = "white bold"
+#style_root = "black bold"
+#format = "[$user]($style) "
+disabled = false
+show_always = false
+style_user = "bg:#2e3440 fg:#ebcb8b bold"
+format = "[](fg:#2e3440)[󰭹 $user]($style)[](fg:#2e3440) "
+
+[directory]
+truncation_length = 4
+truncation_symbol = "…/"
+read_only = " 󰌾"
+# "Flame Gradient" (Warm Monochromatic
+#style = "bg:#458588 fg:#000000"
+#style = "bg:#801b29 fg:#ffffff bold"
+#format = "[](fg:#4a121a bg:#801b29)[ $path ]($style)"
+
+# "Soft Capsule" (Using Rounded Glyphs)
+#
+style = "bg:#2e3440 fg:#ebcb8b bold" # Minty Frost Blue text on Dark Graphite
+format = "[](fg:#2e3440)[󰉋 $path]($style)[](fg:#2e3440) "
+
+# Cyberpunk Slash" (Using Angled Glyphs)
+#style = "bg:#1e1e2e fg:#f107a3 bold"
+#format = "[](fg:#f107a3 bg:#1e1e2e)[ 󰝰 $path ]($style)"
+
+[cmd_duration]
+min_time = 0
+# format = "took [$duration]($style) "
+show_milliseconds = true
+
+# "Soft Capsule" (Using Rounded Glyphs)
+style = "bg:#2e3440 fg:#d8dee9" # Neutral Slate text
+format = "[](fg:#2e3440)[󱎫 $duration]($style)[](fg:#2e3440) "
+
+# ---------- Language version indicators ---------- #
+[rust]
+#format = "[$symbol($version)]($style) "
+#symbol = "rs "
+disabled = false
+style = "bg:#2e3440 fg:#a3be8c bold"
+format = "[](fg:#2e3440)[🦀 $version]($style)[](fg:#2e3440) "
+
+[bun]
+disabled = false
+style = "bg:#2e3440 fg:#a3be8c bold"
+format = "[](fg:#2e3440)[🥟 $version]($style)[](fg:#2e3440) "
+
+[mise]
+disabled = false
+#format = "via [󰝤 mise $version]($style) "
+#style = "green bold"
+style = "bg:#2e3440 fg:#a3be8c bold"
+format = "[](fg:#2e3440)[󱁕 mise]($style)[](fg:#2e3440) "
+
+[python]
+#format = "[$symbol$pyenv_prefix($version)( \\($virtualenv\\))]($style) "
+#symbol = "py "
+#capsule
+symbol = "🐍 "
+style = "bg:#2e3440 fg:#a3be8c bold" # Soft Sage/Muted Yellow text
+format = "[](fg:#2e3440)[$symbol$version]($style)[](fg:#2e3440) "
+
+[nodejs]
+#format = "[$symbol($version)]($style) "
+#symbol = "node "
+detect_files = ["package.json", ".node-version"]
+symbol = "󰎙 "
+# capsule
+style = "bg:#2e3440 fg:#a3be8c bold" # Muted Olive Green text
+format = "[](fg:#2e3440)[$symbol$version]($style)[](fg:#2e3440) "
+
+[golang]
+#format = "[$symbol($version)]($style) "
+#symbol = "go "
+disabled = false
+style = "bg:#88c0d0 fg:#a3be8c bold"
+format = "[](fg:#2e3440)[ $version]($style)[](fg:#2e3440) "
+
+# ---------- Docker context ---------- #
+[docker_context]
+#format = "[$symbol$context]($style) "
+#symbol = "docker "
+disabled = false
+style = "bg:#2e3440 fg:#88c0d0 bold"
+format = "[](fg:#2e3440)[󰡨 $context]($style)[](fg:#2e3440) "
+only_with_files = true
+detect_files = ["docker-compose.yml", "docker-compose.yaml", "Dockerfile"]
+
+# ---------- Shell nesting level ---------- #
+[shlvl]
+disabled = false
+threshold = 2
+#symbol = "↕ "
+#format = "[$symbol$shlvl]($style) "
+style = "bg:#2e3440 fg:#88c0d0 bold"
+format = "[](fg:#2e3440)[↕ SHLVL $shlvl]($style)[](fg:#2e3440) "
+
+# ---------- Exit status ---------- #
+[status]
+disabled = false
+#format = "[$symbol$status]($style) "
+#symbol = "✘ "
+# show_always = true line replaced with disabled false above
+style = "bg:#2e3440 fg:#bf616a bold" # Soft Nord Red for errors
+success_symbol = ""
+format = "[](fg:#2e3440)[󰚌 $int]($style)[](fg:#2e3440) "
+
+# ---------- Kubernetes context ---------- #
+[kubernetes]
+disabled = false
+#format = "[$symbol$context( \\($namespace\\))]($style) "
+#symbol = "k8s "
+#style = "bold cyan"
+detect_files = ["k8s", "kubernetes", "Tiltfile"]
+detect_folders = ["charts", "kustomize"]
+style = "bg:#2e3440 fg:#88c0d0 bold"
+format = "[](fg:#2e3440)[󱃾 $context]($style)[](fg:#2e3440) "
+
+[kubernetes.context_aliases]
+#"arn:aws:eks:.*:.*:cluster/(?P<name>.*)" = "$name"
+"gke_.*_.*_(.*)" = "gke-$1"
+"arn:aws:eks:.*:.*:cluster/(.*)" = "eks-$1"
+
+[aws]
+#symbol = "󰸏 "
+disabled = false
+#format = "on [$symbol$profile(\\($region\\))]($style) "
+#style = "amber bold"
+style = "bg:#2e3440 fg:#88c0d0 bold"
+format = "[](fg:#2e3440)[󰸏 $profile]($style)[](fg:#2e3440) "
+
+# ---------- Nix shell indicator ---------- #
+[nix_shell]
+disabled = false
+#format = "[$symbol$state( \\($name\\))]($style) "
+#symbol = "nix "
+#style = "bold blue"
+style = "bg:#2e3440 fg:#88c0d0 bold"
+format = "[](fg:#2e3440)[ $state]($style)[](fg:#2e3440) "
+
+# ---------- Direnv indicator ---------- #
+# Disabled: starship reads direnv state before the hook sets DIRENV_DIR,
+# causing "[WARN] unknown direnv state" on every prompt render.
+# Direnv itself still works — only the starship status indicator is hidden.
+[direnv]
+disabled = true
+
+# ---------- Pueue Tasks (Background daemon) ---------- #
+[custom.pueue]
+command = "n=$(pueue status -j 2>/dev/null | jq -r '[.tasks[] | select(.status == \"Running\" or .status == \"Queued\")] | length' 2>/dev/null) && [ \"$n\" != \"0\" ] && echo \"$n\""
+when = "command -v pueue >/dev/null && command -v jq >/dev/null"
+ignore_timeout = true
+symbol = "⚙ "
+style = "bold purple"
+format = "[$symbol$output]($style) "
+
+# ---------- Container-aware fallback ---------- #
+# When DOTFILES_CONTAINER=1, show a lightweight indicator so the user
+# knows they are inside a container.  Uses only ASCII-safe characters
+# to avoid rendering issues with missing Nerd Fonts.
+
+[container]
+disabled = false
+symbol = "[ctr]"
+style = "bold dimmed blue"
+format = '[$symbol]($style) '
+
+[env_var.DOTFILES_CONTAINER]
+variable = "DOTFILES_CONTAINER"
+symbol = ""
+style = "bold dimmed cyan"
+format = '[container]($style) '
+
+[env_var.DOTFILES_CODESPACE]
+variable = "DOTFILES_CODESPACE"
+symbol = ""
+style = "bold dimmed green"
+format = '[codespace]($style) '
+
+[env_var.DOTFILES_LAYERS_LOAD_STATUS]
+variable = "DOTFILES_LAYERS_LOAD_STATUS"
+symbol = ""
+style = "bold dimmed yellow"
+format = '[•]($style) '
+
+[palettes.catppuccin_mocha]
+rosewater = "#f5e0dc"
+flamingo = "#f2cdcd"
+pink = "#f5c2e7"
+mauve = "#cba6f7"
+red = "#f38ba8"
+maroon = "#eba0ac"
+peach = "#fab387"
+yellow = "#f9e2af"
+green = "#a6e3a1"
+teal = "#94e2d5"
+sky = "#89dceb"
+sapphire = "#74c7ec"
+blue = "#89b4fa"
+lavender = "#b4befe"
+text = "#cdd6f4"
+subtext1 = "#bac2de"
+subtext0 = "#a6adc8"
+overlay2 = "#9399b2"
+overlay1 = "#7f849c"
+overlay0 = "#6c7086"
+surface2 = "#585b70"
+surface1 = "#45475a"
+surface0 = "#313244"
+base = "#1e1e2e"
+mantle = "#181825"
+crust = "#11111b"
+
+[palettes.catppuccin_latte]
+rosewater = "#dc8a78"
+flamingo = "#dd7878"
+pink = "#ea76cb"
+mauve = "#8839ef"
+red = "#d20f39"
+maroon = "#e64553"
+peach = "#fe640b"
+yellow = "#df8e1d"
+green = "#40a02b"
+teal = "#179299"
+sky = "#04a5e5"
+sapphire = "#209fb5"
+blue = "#1e66f5"
+lavender = "#7287fd"
+text = "#4c4f69"
+subtext1 = "#5c5f77"
+subtext0 = "#6c6f85"
+overlay2 = "#7c7f93"
+overlay1 = "#8c8fa1"
+overlay0 = "#9ca0b0"
+surface2 = "#acb0be"
+surface1 = "#bcc0cc"
+surface0 = "#ccd0da"
+base = "#eff1f5"
+mantle = "#e6e9ef"
+crust = "#dce0e8"

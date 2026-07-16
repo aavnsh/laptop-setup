@@ -1,0 +1,127 @@
+# mise (runtime manager) configuration — DOTFILES-MANAGED BASE LAYER
+# https://mise.jdx.dev/
+#
+# This file lives in conf.d/ (loaded first, lowest precedence) and is the
+# read-only base config deployed by chezmoi. The writable global config
+# `~/.config/mise/config.toml` is intentionally NOT chezmoi-managed (see
+# .chezmoiignore): that's where `mise use -g` / `mise upgrade` write their
+# version pins. Splitting them this way stops mise's mutable writes from
+# perpetually drifting the chezmoi-managed source. User pins in
+# config.toml override these defaults. Don't move tool defaults back into
+# config.toml or the drift returns.
+
+[settings]
+# Install missing tools automatically
+auto_install = true
+# Ensure mise tool paths/shims are placed ahead of system PATH
+activate_aggressive = true
+# Use verbose output
+verbose = false
+# Use precompiled ruby binaries (silences 2026.8.0 warning)
+ruby.compile = false
+
+[tools]
+# Node.js
+node = "24"
+
+# Python
+python = ["3.12", "3.11", "3.14"]
+
+# Go
+go = "latest"
+
+# Rust
+rust = "latest"
+
+# Ruby
+ruby = "3.3"
+
+# Java
+java = "21"
+
+# Deno
+deno = "latest"
+
+# Bun
+bun = "latest"
+
+# Zig
+zig = "latest"
+
+# CLI Tools
+atuin = "latest"
+bat = "latest"
+codex = "latest"
+eza = "latest"
+gping = "latest"
+ripgrep = "latest"
+ruff = "latest"
+yazi = "latest"
+zellij = "latest"
+zoxide = "latest"
+"aqua:twpayne/chezmoi" = "latest"
+"aqua:junegunn/fzf" = "latest"
+"aqua:FiloSottile/age" = "latest"
+# hyperfine intentionally NOT managed by mise: the aqua package for
+# sharkdp/hyperfine only ships an x86_64 macOS binary, so on Apple
+# Silicon without Rosetta the mise shim is unrunnable ("Bad CPU type in
+# executable"), which silently breaks `dot doctor`'s startup benchmark.
+# It's provided natively by Brewfile.cli (arm64) and by Linux package
+# managers instead.
+"aqua:ollama/ollama" = "latest"
+"aqua:Nukesor/pueue/pueue" = "4.0.3"
+"aqua:Nukesor/pueue/pueued" = "4.0.3"
+"aqua:dandavison/delta" = "latest"
+fd = "latest"
+"aqua:ClementTsang/bottom" = "latest"
+"npm:tldr" = "latest"
+"aqua:jesseduffield/lazygit" = "latest"
+"aqua:jesseduffield/lazydocker" = "latest"
+
+# Python tools
+"pipx:poetry" = "latest"
+uv = "latest"
+"pipx:aider-chat" = "latest"
+"pipx:shell-gpt" = "latest"
+
+# AI tools
+# "npm:@anthropic-ai/claude-code" = "latest"  # disabled 2026-06-04: npm 11 skips the platform-native optionalDependency on global installs, breaking the binary. Use Anthropic's native installer instead (~/.local/bin/claude, self-updating).
+"npm:@github/copilot" = "latest"
+# antigravity-cli (agy) is installed via native curl installer, not npm:
+# curl -fsSL https://antigravity.google/cli/install.sh | bash
+# codex provided by the native `codex` pin above; `npm:codex-cli` was an
+# unrelated legacy package (codex.js) that collided on the `codex` bin name.
+# opencode provided by the native `opencode` pin in mise.toml; `npm:opencode-ai`
+# was a redundant duplicate using the broken npm optional-dep wrapper pattern.
+kiro-cli = "latest"
+"npm:autohand-cli" = "latest"
+"npm:@qwen-code/qwen-code" = "latest"
+"npm:@guizmo-ai/zai-cli" = "latest"
+# "pipx:mistral-vibe" = "latest"  # disabled 2026-05-12: dep `mistralai` quarantined on PyPI; re-enable when restored
+
+# Task runners
+task = "latest"
+just = "latest"
+
+# Nushell (structured-data shell). The bare `nushell` name isn't in
+# mise's tool registry; the aqua: backend resolves it from the official
+# release tarballs.
+"aqua:nushell/nushell" = "latest"
+
+[env]
+# Environment variables to set
+MISE_EXPERIMENTAL = "1"
+# Use the gh token when authenticated (lifts GitHub API rate limits for
+# aqua/ubi backends), but degrade gracefully when gh is absent or logged
+# out. Without the `|| true` the failing command makes mise abort *every*
+# operation with "failed to parse template" — breaking `dot env`,
+# `mise install`, and shell startup on any machine where `gh auth` hasn't
+# run yet.
+GITHUB_TOKEN = "{{exec(command='gh auth token 2>/dev/null || true')}}"
+# Build caches → /tmp (cleared on reboot)
+GOCACHE = "/tmp/builds/go-cache"
+GOTMPDIR = "/tmp/builds/go-tmp"
+PIP_CACHE_DIR = "/tmp/builds/pip-cache"
+UV_CACHE_DIR = "/tmp/builds/uv-cache"
+ZIG_LOCAL_CACHE_DIR = "/tmp/builds/zig-cache"
+ZIG_GLOBAL_CACHE_DIR = "/tmp/builds/zig-global-cache"
