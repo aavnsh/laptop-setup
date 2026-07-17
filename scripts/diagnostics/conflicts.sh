@@ -18,6 +18,12 @@ resolve_source_dir() {
     printf "%s\n" "$CHEZMOI_SOURCE_DIR"
     return
   fi
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [[ -d "$script_dir/../.." ]]; then
+    printf "%s\n" "$(cd "$script_dir/../.." && pwd)"
+    return
+  fi
   if [[ -d "$HOME/.dotfiles" ]]; then
     printf "%s\n" "$HOME/.dotfiles"
     return
