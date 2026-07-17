@@ -8,7 +8,13 @@ if command -v heroku &>/dev/null; then
   _HEROKU_ALIASES_LOADED=1
 
   # Get the directory containing this script
-  _HEROKU_ALIASES_DIR="${BASH_SOURCE[0]%/*}"
+  _HEROKU_ALIASES_DIR="."
+  if [ -n "${BASH_VERSION:-}" ]; then
+    _HEROKU_ALIASES_DIR="${BASH_SOURCE[0]%/*}"
+  elif [ -n "${ZSH_VERSION:-}" ]; then
+    _HEROKU_ALIASES_DIR="${(%):-%x}"
+    _HEROKU_ALIASES_DIR="${_HEROKU_ALIASES_DIR%/*}"
+  fi
 
   # Core aliases
   # hk: Heroku CLI command shortcut.

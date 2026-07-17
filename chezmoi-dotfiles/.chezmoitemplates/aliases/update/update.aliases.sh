@@ -314,6 +314,6 @@ update() {
 #-------------------------------#
 
 # If the script is executed directly, inform the user about sourcing
-if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]:-}" = "${0:-}" ]]; then
   printf '%b\n' "${GREEN} Source this script and run 'upd' to start the update process.${RESET}"
 fi

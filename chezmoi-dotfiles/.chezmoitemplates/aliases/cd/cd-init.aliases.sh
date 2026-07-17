@@ -28,7 +28,7 @@ alias ld='lwd'        # Return to last directory
 # Initialize last working directory
 if [[ "${RESTORE_LAST_DIR:-false}" == "true" ]]; then
   # Only run when the shell starts, not when the script is sourced again
-  if [[ -z "${DOTFILES_INIT_DONE}" ]]; then
+  if [[ -z "${DOTFILES_INIT_DONE:-}" ]]; then
     lwd 2>/dev/null
     export DOTFILES_INIT_DONE=1
   fi
