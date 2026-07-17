@@ -10,7 +10,13 @@ _SECURITY_ALIASES_LOADED=1
 _DOTFILES_SECURITY_MODE="${DOTFILES_SECURITY_MODE:-standard}"
 
 # Get the directory containing this script
-_SECURITY_ALIASES_DIR="${BASH_SOURCE[0]%/*}"
+_SECURITY_ALIASES_DIR="."
+if [ -n "${BASH_VERSION:-}" ]; then
+  _SECURITY_ALIASES_DIR="${BASH_SOURCE[0]%/*}"
+elif [ -n "${ZSH_VERSION:-}" ]; then
+  _SECURITY_ALIASES_DIR="${(%):-%x}"
+  _SECURITY_ALIASES_DIR="${_SECURITY_ALIASES_DIR%/*}"
+fi
 
 # OpenSSL aliases
 if command -v openssl >/dev/null 2>&1; then
